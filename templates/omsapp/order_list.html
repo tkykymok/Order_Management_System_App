@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load utils %}
+
+{% block content %}
+
+<div class="container-fluid">
+    <br>
+    <h2>Order List</h2>
+        <div class="col">
+                    <table class="table table-sm bg-light">
+                    <tr>
+                        <th>Order N/O</th>
+                        <th></th>
+                        <th>Customer</th>
+                        <th>Item Code</th>
+                        <th>Item Description</th>
+                        <th>Maker P/N</th>
+                        <th>Unit Price</th>
+                        <th>Qty</th>
+                        <th>Sales Amount</th>
+                        <th>Request Delivery Date</th>
+                        <th>Supplier</th>
+                        <th></th>
+
+                    </tr>
+                    {% for order in object_list %}
+                    <tr>
+                        <td>{{ order.order_number }}</td>
+                        <td>{{ order.id }}</td>
+                        <td>{{ order.item_code.customer }}</td>
+                        <td>{{ order.item_code }}</td>
+                        <td>{{ order.item_code.parts_name }}</td>
+                        <td>{{ order.item_code.parts_number }}</td>
+                        <td>¥{{ order.item_code.sell_price }}</td>
+                        <td>{{ order.quantity }}</td>
+                        <td>¥{{ order.quantity | multiply:order.item_code.sell_price | intcomma}}</td>
+                        <td>{{ order.request_delivery_date }}</td>
+                        <td>{{ order.item_code.supplier }}</td>
+                        <td><a class="btn btn-sm btn-info" href="{% url 'update' order.pk %}">Update</a></td>
+                    </tr>
+                    {% endfor %}
+        </div>
+
+        
+</div>
+{% endblock %}
+
+
+    

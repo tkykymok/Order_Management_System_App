@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+    {% if messages %}
+        {% for message in messages %}
+        <div class="alert-{{ message.tags }} mb-2">
+            {{ message }}
+        </div>
+        {% endfor %}
+    {% endif%}
+
+<div class="container h-100 body" >
+<br>
+<br>
+<br>
+    <div class="row">
+        <form action="" method="POST">{% csrf_token %}
+            {{form.as_p}} 
+            <input type="submit" value="Submit" name="Submit">
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+

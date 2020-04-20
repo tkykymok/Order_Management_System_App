@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load utils %}
+
+{% block content %}
+
+<div class="container-fluid">
+    <br>
+    <h2>Order List</h2>
+        <div class="col">
+        </div>
+
+        <div class="col">
+                    <table class="table table-sm bg-light">
+                    <tr>
+                        <th>Order N/O</th>
+                        <th>Update</th>
+                    </tr>
+                    {% for order in object_list %}
+                    <tr>
+                        <td></td>
+                        <td><a class="btn btn-sm btn-info" href="{% url 'update' order.pk %}">Update</a></td>
+                    </tr>
+                    {% endfor %}
+                    </table>
+        </div>
+        
+</div>
+{% endblock %}
+
+
+    
