@@ -11,15 +11,17 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
-from .local_settings import *
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-SECRET_KEY = os.environ.get('SECRET_KEY')
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
+
+SECRET_KEY = 'nt_mexqj7y=d0$y#1u7a(v1%yi5=_vw(p34-nu2b#$#mf%bku&'
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -135,3 +137,8 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static')
 ]
+
+try:
+    from oms1.local_settings import *
+except ImportError:
+    pass
