@@ -1,9 +1,32 @@
-console.log('ok');
 
 var csrfToken = $('input[name=csrfmiddlewaretoken]').val();
 
 
 $(document).ready(function () {
+
+    //"PrjCodeGet" ---------------------------
+    $('#prjCode').keypress(function (event) {
+        if (event.keyCode === 13) {
+            var serializedData = $('#createOrderNumber').serialize();
+            $.ajax({
+                url: '/prj-code-get/',
+                data: serializedData,
+                type: 'post',
+                dataType: 'json',
+                success: function (response) {
+                    var customerCode = response.customer_info.customer_code 
+                    var customerName =response.customer_info.name
+                    $('#customer').val(customerCode + '/' + customerName )
+                    $('#orderNumber').focus();
+                    $('#prjCode').prop("readonly", true);
+                },
+                error: function () {
+                    alert("Please input valid PRJ Code.");
+                }
+            });
+        }
+    });
+    
     //"createOrderNumber" ---------------------------
     $('#orderNumber').keypress(function (event) {
         if (event.keyCode === 13) {
@@ -48,10 +71,15 @@ $(document).ready(function () {
             type: 'post',
             dataType: 'json',
             success: function (response) {
-                $('#item1').focus();
-                $('#orderNumber').prop("disabled", true);
-                $('input[name="suppDelDate"]').prop("disabled", true);
-                $('input[name="custDelDate"]').prop("disabled", true);
+                var orderNumber = $('#orderNumber').val();
+                var prjCode = $('#prjCode').val();
+                $('#orderNumCopy').val(orderNumber);
+                $('#prjCodeCopy').val(prjCode);
+
+                $('#item1').prop("disabled", false).focus();
+                $('#orderNumber').prop("readonly", true);
+                $('input[name="suppDelDate"]').prop("readonly", true);
+                $('input[name="custDelDate"]').prop("readonly", true);
                 $('#enter1').hide();
             },
             error: function () {
@@ -59,7 +87,8 @@ $(document).ready(function () {
             }
         });
     });
-    // end ---------------------------
+
+    // "Item Info Get" ---------------------------
     $('#item1').keypress(function () {
         if (event.keyCode === 13) {
             itemInfoGet('pName1', 'pNo1', 'sp1', 'bp1', 'qty1');
@@ -67,9 +96,8 @@ $(document).ready(function () {
     });
     $('#qty1').keypress(function () {
         if (event.keyCode === 13) {
-            $('#item2').focus();
-            $('#item1').prop("disabled", true);
-
+            $('#item2').prop("disabled", false).focus();
+            $('#item1').prop('readonly', true);
         }
     });
     $('#item2').keypress(function () {
@@ -79,8 +107,9 @@ $(document).ready(function () {
     });
     $('#qty2').keypress(function () {
         if (event.keyCode === 13) {
-            $('#item3').focus();
-            $('#item2').prop("disabled", true);
+            $('#item3').prop("disabled", false).focus();
+            $('#item2').prop('readonly', true);
+       
         }
     });
     $('#item3').keypress(function () {
@@ -90,8 +119,8 @@ $(document).ready(function () {
     });
     $('#qty3').keypress(function () {
         if (event.keyCode === 13) {
-            $('#item4').focus();
-            $('#item3').prop("disabled", true);
+            $('#item4').prop("disabled", false).focus();
+            $('#item3').prop('readonly', true);
         }
     });
     $('#item4').keypress(function () {
@@ -101,8 +130,8 @@ $(document).ready(function () {
     });
     $('#qty4').keypress(function () {
         if (event.keyCode === 13) {
-            $('#item5').focus();
-            $('#item4').prop("disabled", true);
+            $('#item5').prop("disabled", false).focus();
+            $('#item4').prop('readonly', true);
         }
     });
     $('#item5').keypress(function () {
@@ -112,26 +141,29 @@ $(document).ready(function () {
     });
     $('#qty5').keypress(function () {
         if (event.keyCode === 13) {
-            $('#item5').focus();
-            $('#item5').prop("disabled", true);
+            $('#item5').focusout();
         }
     });
 
 
     function itemInfoGet(pName, pNo, sp, bp, qty) {
         var serializedData = $('#orderContentForm').serialize();
+        
         $.ajax({
             url: '/item-info-get/',
             type: 'post',
             data: serializedData,
             dataType: 'json',
             success: function (response) {
-                console.log(response.item_info);
-                $(`#${pName}`).val(response.item_info.parts_name).prop("disabled", true);
-                $(`#${pNo}`).val(response.item_info.parts_number).prop("disabled", true);
-                $(`#${sp}`).val(response.item_info.sell_price).prop("disabled", true);
-                $(`#${bp}`).val(response.item_info.buy_price).prop("disabled", true);
-                $(`#${qty}`).focus();
+                if ($('#prjCodeCopy').val() === response.prj) {
+                    $(`#${pName}`).val(response.item_info.parts_name).prop("disabled", true);
+                    $(`#${pNo}`).val(response.item_info.parts_number).prop("disabled", true);
+                    $(`#${sp}`).val(response.item_info.sell_price).prop("disabled", true);
+                    $(`#${bp}`).val(response.item_info.buy_price).prop("disabled", true);
+                    $(`#${qty}`).prop('disabled', false).focus();
+                } else {
+                    alert(`Please input valid Item Code. This Item Code is registered as ${response.prj}`);
+                }
             },
             error: function () {
                 alert("Please input valid Item Code.");
@@ -139,9 +171,64 @@ $(document).ready(function () {
         });
     };
 
+    // "Order Confirm modal" ---------------------------
+    let item, qty
+    let order = {}; 
+    $('#create').click(function () {
+        for (i = 1; i <= 5; i++) {
+            if ($(`#item${i}`).val() !== "" && $(`#qty${i}`).val() !== "") {
+                item = $(`#item${i}`).val();
+                qty = $(`#qty${i}`).val();
+                order[i] = [item, qty];
+                
+                $("#orderConfirmTable > tbody:last-child").append(`
+                    <tr>
+                        <td width="50%">${item}</td>
+                        <td width="50%">${qty}</td>
+                    </tr>
+                `);
+            } else if (Object.keys(order).length === 0){
+                $("#orderConfirmTable > tbody:last-child").append(`
+                <tr>
+                    <td width="50%">No Order</td>
+                    <td width="50%">No Order</td>
+                </tr>
+                 `);
+                break
+            } else {
+                break
+            }
+        }
+        console.log(order);
+    });
+    $('#close').click(function () {
+        $("#orderConfirmTable tbody").empty();
+    });
     
+    
+    // "Order final confirm" ---------------------------
+    $('#confirm').click(function () {
+        var serializedData = $('#orderContentForm').serialize();
 
+        $.ajax({
+            url: '/order-confirm-create/',
+            type: 'post',
+            data: serializedData,
+            dataType: 'json',
+            success: function (response) {
+                console.log(response.result);
+                location.reload();
+            },
+            error: function () {
+                alert("error");
+            }
+        });
+    });
 
-
+    // "Cancel Button" ---------------------------
+    $('#cancel').click(function () {
+        location.reload(); 
+    });
+    
 
 });

@@ -6,10 +6,10 @@ from django.views.generic import (
     DetailView,
     UpdateView
 )
-from omsapp.models import Order, Item, OrderNumber, Order
+from omsapp.models import Order, Item, OrderNumber, Order, Project
 
 from django.urls import reverse_lazy
-from extra_views import InlineFormSetFactory, CreateWithInlinesView, UpdateWithInlinesView
+# from extra_views import InlineFormSetFactory, CreateWithInlinesView, UpdateWithInlinesView
 from django.views.generic import TemplateView
 from .forms import OrderNumberForm, OrderForm
 
@@ -25,8 +25,15 @@ class MenuView(View):
 class OrderCreateView(View):
     def get(self,request):
         return render(request, 'omsapp/order_entry.html')
+
+class PrjCodeGet(View):
+    def post(self, request):
+        prj_code_get = request.POST.getlist('prjCode', None)
+        prj_code = Project.objects.get(prj_code = prj_code_get[0])
+        customer_info = prj_code.customer_code
+        return JsonResponse({'customer_info':model_to_dict(customer_info)}, status=200)
     
-class OrderNumberCreateView(View):
+class OrderNumberCreate(View):
     def post(self, request):
         order_number = request.POST.get('orderNumber',None)
         supplier_delivery_date = request.POST.get('suppDelDate',None)
@@ -42,83 +49,55 @@ class OrderNumberCreateView(View):
         
         return JsonResponse({'orderNumber':model_to_dict(new_order_number)}, status=200)
         
-class ItemInfoGetView(View):
+class ItemInfoGet(View):
     def post(self, request):
-            item_code = request.POST.getlist('item', None)
-            item_info = Item.objects.get(item_code=item_code[0])
-            print(vars(item_info))
-            print(item_code)
-            return JsonResponse({'item_info':model_to_dict(item_info)}, status=200)
+        item_code = request.POST.getlist('item', None)
+        item_info = Item.objects.get(item_code=item_code[-1])
+        prj = item_info.prj_code.prj_code
+        print(prj)
+        return JsonResponse({'item_info':model_to_dict(item_info),'prj':prj}, status=200)
+    
+class OrderCreateConfirm(View):
+    def post(self, request):
+        input_order_number = request.POST.get('orderNumber', None)
+    
+        items = request.POST.getlist('item', None)
+        qtys = request.POST.getlist('qty', None)
         
-        # elif request.POST.get('item2', None):
-        #     item_code = request.POST.get('item2', None)
-        #     item_info = Item.objects.get(item_code=item_code)
-        #     print(vars(item_info))
-        #     return JsonResponse({'item_info':model_to_dict(item_info)}, status=200)
-        # elif request.POST.get('item3', None):
-        #     item_code = request.POST.get('item3', None)
-        #     item_info = Item.objects.get(item_code=item_code)
-        #     print(vars(item_info))
-        #     return JsonResponse({'item_info':model_to_dict(item_info)}, status=200)
-        # elif request.POST.get('item4', None):
-        #     item_code = request.POST.get('item4', None)
-        #     item_info = Item.objects.get(item_code=item_code)
-        #     print(vars(item_info))
-        #     return JsonResponse({'item_info':model_to_dict(item_info)}, status=200)
-        # elif request.POST.get('item5', None):
-        #     item_code = request.POST.get('item5', None)
-        #     item_info = Item.objects.get(item_code=item_code)
-        #     print(vars(item_info))
-        #     return JsonResponse({'item_info':model_to_dict(item_info)}, status=200)
+        for i in range(len(items)):
+            if items[i] == "":
+                break
+            else:      
+                new_order = Order.objects.create(
+                    order_number = OrderNumber.objects.get(order_number=input_order_number),
+                    item_code = Item.objects.get(item_code = items[i]),
+                    quantity = qtys[i]
+                )
+                print(new_order)
             
-        
+        return JsonResponse({'result':'ok'}, status=200)
     
-        
+    
+    
+    
+    
+# class OrderUpdateView(UpdateView):
+#     model = Order
+#     form_class = OrderForm
+    
+#     template_name = 'omsapp/order_update.html'
+#     success_url = reverse_lazy('success')
+    
+#     def form_valid(self, form):
+#         result = super().form_valid(form)
+#         return result
 
-# class UpdateCrudUser(View):
-#     def  get(self, request):
-#         id1 = request.GET.get('id', None)
-#         name1 = request.GET.get('name', None)
-#         address1 = request.GET.get('address', None)
-#         age1 = request.GET.get('age', None)
-
-#         obj = CrudUser.objects.get(id=id1)
-#         obj.name = name1
-#         obj.address = address1
-#         obj.age = age1
-#         obj.save()
-
-#         user = {'id':obj.id,'name':obj.name,'address':obj.address,'age':obj.age}
-
-#         data = {
-#             'user': user
-#         }
-#         return JsonResponse(data)
-        
-        
-
+# class SuccessView(TemplateView):
+#     template_name = "omsapp/success.html"
     
-    
-    
-    
-    
-class OrderUpdateView(UpdateView):
-    model = Order
-    form_class = OrderForm
-    
-    template_name = 'omsapp/order_update.html'
-    success_url = reverse_lazy('success')
-    
-    def form_valid(self, form):
-        result = super().form_valid(form)
-        return result
-
-class SuccessView(TemplateView):
-    template_name = "omsapp/success.html"
-    
-class OrderDetailView(DetailView):
-    model = Order
-    template_name = "omsapp/order_detail.html"
+# class OrderDetailView(DetailView):
+#     model = Order
+#     template_name = "omsapp/order_detail.html"
     
 class OrderListView(ListView):
     model = Order

@@ -9,13 +9,21 @@
             <form id="createOrderNumber" method="post"> {% csrf_token %}
                 <ul>
                     <li>
-                        <label class='text1'>Order No：</label><input id="orderNumber" type="text" name="orderNumber" placeholder="Order No" maxlength="8" >
+                        <label class='text1'>PRJ Code：</label><input id="prjCode" type="text" name="prjCode" placeholder="" maxlength="4" >
                     </li>
                     <li>
-                        <label class='text1'>Supplier Delivery date：</label><input class="" type="text" name="suppDelDate" placeholder="yyyy-mm-dd">
+                        <label class='text1'>Customer：</label><input id='customer' class="" type="text" name="customer" placeholder="" readonly=True>
+                    </li>    
+                </ul>
+                <ul>
+                    <li>
+                        <label class='text1'>Order No ：</label><input id="orderNumber" type="text" name="orderNumber" placeholder="" maxlength="8" >
+                    </li>
+                    <li>
+                        <label class='text1'>Supplier Delivery date：</label><input class="" type="text" name="suppDelDate" placeholder="yyyymmdd">
                     </li>    
                     <li>
-                        <label class='text1'>Customer Delivery date：</label><input class="" type="text" name="custDelDate" placeholder="yyyy-mm-dd">
+                        <label class='text1'>Customer Delivery date：</label><input class="" type="text" name="custDelDate" placeholder="yyyymmdd">
                     </li>
                     <button id="enter1" type="button" class="btn btn-primary float-right mt-2 mr-4">Enter</button>
                 </ul>
@@ -34,107 +42,117 @@
                     </tr>
 
                     <form id="orderContentForm" action="" method="POST"> {% csrf_token %}
+                            <input id="orderNumCopy" type="hidden" name="orderNumber">
+                            <input id="prjCodeCopy" type="hidden" name="prjCode" placeholder="" maxlength="4">                            
                         <tr>
-                            <td><input id="item1" type="text" name="item" maxlength="5"></td>
+                            <td><input id="item1" type="text" name="item" maxlength="5" disabled=True></td>
                             <td><input id="pName1" class="noinput" type="text"></td>
                             <td><input id="pNo1" class="noinput" type="text"></td>
                             <td><input id="sp1" class="noinput" type="text"></td>
                             <td><input id="bp1" class="noinput" type="text"></td>
-                            <td><input id="qty1"  type="text" name="qty1" ></th>
+                            <td><input id="qty1"  type="text" name="qty" disabled=True></th>
                         </tr>
                             
                         <tr>
-                            <td><input id="item2" type="text" name="item"maxlength="5"></td>
+                            <td><input id="item2" type="text" name="item" maxlength="5" disabled=True></td>
                             <td><input id="pName2" class="noinput" type="text"></td>
                             <td><input id="pNo2" class="noinput" type="text"></td>
                             <td><input id="sp2" class="noinput" type="text"></td>
                             <td><input id="bp2" class="noinput" type="text"></td>
-                            <td><input id="qty2" type="text" name="qty2"></th>
+                            <td><input id="qty2" type="text" name="qty" disabled=True></th>
                         </tr>
                                 
                         <tr>
-                            <td><input id="item3"  type="text" name="item" maxlength="5"></td>
+                            <td><input id="item3"  type="text" name="item" maxlength="5" disabled=True></td>
                             <td><input id="pName3" class="noinput" type="text"></td>
                             <td><input id="pNo3" class="noinput" type="text"></td>
                             <td><input id="sp3" class="noinput" type="text"></td>
                             <td><input id="bp3" class="noinput" type="text"></td>
-                            <td><input id="qty3" type="text" name="qty3"></th>
+                            <td><input id="qty3" type="text" name="qty" disabled=True></th>
                         </tr>
                         <tr>
-                            <td><input id="item4"  type="text" name="item" maxlength="5"></td>
+                            <td><input id="item4"  type="text" name="item" maxlength="5" disabled=True></td>
                             <td><input id="pName4" class="noinput" type="text"></td>
                             <td><input id="pNo4" class="noinput" type="text"></td>
                             <td><input id="sp4" class="noinput" type="text"></td>
                             <td><input id="bp4" class="noinput" type="text"></td>
-                            <td><input id="qty4" type="text" name="qty4"></th>
+                            <td><input id="qty4" type="text" name="qty" disabled=True></th>
                         </tr>
                         <tr>
-                            <td><input id="item5"  type="text" name="item" maxlength="5"></td>
+                            <td><input id="item5"  type="text" name="item" maxlength="5" disabled=True></td>
                             <td><input id="pName5" class="noinput" type="text"></td>
                             <td><input id="pNo5" class="noinput" type="text"></td>
                             <td><input id="sp5" class="noinput" type="text"></td>
                             <td><input id="bp5" class="noinput" type="text"></td>
-                            <td><input id="qty5" type="text" name="qty5"></th>
+                            <td><input id="qty5" type="text" name="qty" disabled=True></th>
                         </tr>
-
-
-
-
-
                     </form>
                 </table>
+
+                <!-- Button trigger modal -->
+                <div class="col-12">
+                    <ul class="float-right">
+                        <li>
+                            <button id="cancel" type="button" class="btn btn-dark mr-3"  >Cnacel</button>
+                        </li>
+                        <li>
+                            <button id="create" type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">Order Create</button>
+                        </li>
+                    </ul>
+                </div>
+
+                
+                <!-- Modal -->
+                <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Create Order Confirmation</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        </div>
+                        <div class="modal-body">
+                            <table id="orderConfirmTable" class="table  text-center table-borderless"  width="100%"> 
+                                <thead>
+                                    <tr>
+                                        <th width="50%">Item Code</th>
+                                        <th width="50%">QTY</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- <tr>
+                                        <td width="50%"> 10001</td>
+                                        <td width="50%">300</td>
+                                    </tr>
+                                    <tr>
+                                        <td width="50%"> 10001</td>
+                                        <td width="50%">300</td>
+                                    </tr>
+                                    <tr>
+                                        <td width="50%"> 10001</td>
+                                        <td width="50%">300</td>
+                                    </tr>
+                                    <tr>
+                                        <td width="50%"> 10001</td>
+                                        <td width="50%">300</td>
+                                    </tr> -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="modal-footer">
+                        <button id="close" type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button id="confirm" type="button" class="btn btn-primary">Confirm</button>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+
+
+
          </div>
     </div>
         
                         
 
 {% endblock %}
-
-
-
-<div class="container">
-<div class="ml-3 mt-3 mb-3"><h2>Order Entry</h2></div>
-    <div class="row mb-2 bg-light">
-        <form action="." method="post">
-        {% csrf_token %}
-
-
-        <table>
-            <div class="ml-2 mt-2 mb-2">Order No: {{ form.order_number}}</div>
-        </table>
-    </div>
-
-    <div class="row mb-2 bg-light">
-        {% for formset in inlines %}
-
-        <table class="table table-sm ">
-            {{ formset.management_form }}
-            {% for form in formset %}
-            <!-- ヘッダ出力 -->
-            {% ifequal forloop.counter0 0 %}
-                {% for field in form %}
-                <td class="bg-light">
-                {% if field.field.widget.is_hidden %}
-                {% else %}
-                    {{ field.label_tag }}
-                {% endif %}
-                </td>
-                {% endfor %}
-            {% endifequal %}
-            <tr>
-                {% for field in form %}
-                <td class="pt-2 pb-2">
-                {{ field }}
-                </td>
-                {% endfor %}
-            </tr>
-            {% endfor %}
-        </table>
-
-        {% endfor %}
-    </div>
-    <input class="btn btn-primary" type="submit" value="登録" />
-</div>
-
-
-

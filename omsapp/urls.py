@@ -5,8 +5,11 @@ from . import views
 urlpatterns = [
     path('', views.MenuView.as_view(), name='menu'),
     path('order-entry/', views.OrderCreateView.as_view(), name='order_entry'),
-    path('order-number-create/', views.OrderNumberCreateView.as_view(), name='order_number_create'),
-    path('item-info-get/', views.ItemInfoGetView.as_view(), name='item_info_get'),
+    path('prj-code-get/', views.PrjCodeGet.as_view(), name='prj_code_get'),
+    path('order-number-create/', views.OrderNumberCreate.as_view(), name='order_number_create'),
+    path('item-info-get/', views.ItemInfoGet.as_view(), name='item_info_get'),
+    path('order-confirm-create/', views.OrderCreateConfirm.as_view(), name='order_create_confirm'),
+    
     
     
     
