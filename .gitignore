@@ -1,2 +1,3 @@
 oms1/local_settings.py
 .vscode
+omsapp/custom_user_model_template.py

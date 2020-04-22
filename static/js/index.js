@@ -4,7 +4,7 @@ var csrfToken = $('input[name=csrfmiddlewaretoken]').val();
 
 $(document).ready(function () {
 
-    //"PrjCodeGet" ---------------------------
+    //"PrjCodeInput" ---------------------------
     $('#prjCode').keypress(function (event) {
         if (event.keyCode === 13) {
             var serializedData = $('#createOrderNumber').serialize();
@@ -15,10 +15,12 @@ $(document).ready(function () {
                 dataType: 'json',
                 success: function (response) {
                     var customerCode = response.customer_info.customer_code 
-                    var customerName =response.customer_info.name
+                    var customerName = response.customer_info.name
+                    var personIncharge = response.person_incharge.username
                     $('#customer').val(customerCode + '/' + customerName )
+                    $('#pic').val(personIncharge )
                     $('#orderNumber').focus();
-                    $('#prjCode').prop("readonly", true);
+                    $('#prjCode').prop("disabled", true);
                 },
                 error: function () {
                     alert("Please input valid PRJ Code.");
@@ -43,6 +45,7 @@ $(document).ready(function () {
                 var validated1 = `${year1}-${month1}-${day1}`;
                 $('input[name="suppDelDate"]').val(validated1);
                 $('input[name="custDelDate"]').focus();
+                $('#suppDateCopy').val(date1);
             } else {
                 alert('Validation Error!');
             }
@@ -58,6 +61,7 @@ $(document).ready(function () {
                 var validated2 = `${year2}-${month2}-${day2}`;
                 $('input[name="custDelDate"]').val(validated2);
                 $('#enter1').focus();
+                $('#custDateCopy').val(date2);
             } else {
                 alert('Validation Error!');
             }
@@ -89,9 +93,11 @@ $(document).ready(function () {
     });
 
     // "Item Info Get" ---------------------------
+
+
     $('#item1').keypress(function () {
         if (event.keyCode === 13) {
-            itemInfoGet('pName1', 'pNo1', 'sp1', 'bp1', 'qty1');
+            itemInfoGet('suppDate1', 'custDate1', 'pName1', 'pNo1', 'sp1', 'bp1', 'qty1');
         }
     });
     $('#qty1').keypress(function () {
@@ -102,7 +108,7 @@ $(document).ready(function () {
     });
     $('#item2').keypress(function () {
         if (event.keyCode === 13) {
-            itemInfoGet('pName2', 'pNo2', 'sp2', 'bp2', 'qty2');
+            itemInfoGet('suppDate2','custDate2','pName2', 'pNo2', 'sp2', 'bp2', 'qty2');
         }
     });
     $('#qty2').keypress(function () {
@@ -114,7 +120,7 @@ $(document).ready(function () {
     });
     $('#item3').keypress(function () {
         if (event.keyCode === 13) {
-            itemInfoGet('pName3', 'pNo3', 'sp3', 'bp3', 'qty3');
+            itemInfoGet('suppDate3','custDate3','pName3', 'pNo3', 'sp3', 'bp3', 'qty3');
         }
     });
     $('#qty3').keypress(function () {
@@ -125,7 +131,7 @@ $(document).ready(function () {
     });
     $('#item4').keypress(function () {
         if (event.keyCode === 13) {
-            itemInfoGet('pName4', 'pNo4', 'sp4', 'bp4', 'qty4');
+            itemInfoGet('suppDate4','custDate4','pName4', 'pNo4', 'sp4', 'bp4', 'qty4');
         }
     });
     $('#qty4').keypress(function () {
@@ -136,19 +142,24 @@ $(document).ready(function () {
     });
     $('#item5').keypress(function () {
         if (event.keyCode === 13) {
-            itemInfoGet('pName5', 'pNo5', 'sp5', 'bp5', 'qty5');
+            itemInfoGet('suppDate5','custDate5','pName5', 'pNo5', 'sp5', 'bp5', 'qty5');
         }
     });
     $('#qty5').keypress(function () {
         if (event.keyCode === 13) {
             $('#item5').focusout();
+            dateGet('suppDate5', 'custDate5');
         }
     });
 
 
-    function itemInfoGet(pName, pNo, sp, bp, qty) {
+ 
+
+
+    function itemInfoGet(suppDate, custDate, pName, pNo, sp, bp, qty) {
+        let suppDelDate = $('#suppDate').val();
+        let custDelDate = $('#custDate').val();    
         var serializedData = $('#orderContentForm').serialize();
-        
         $.ajax({
             url: '/item-info-get/',
             type: 'post',
@@ -156,6 +167,8 @@ $(document).ready(function () {
             dataType: 'json',
             success: function (response) {
                 if ($('#prjCodeCopy').val() === response.prj) {
+                    $(`#${suppDate}`).val(suppDelDate);
+                    $(`#${custDate}`).val(custDelDate);
                     $(`#${pName}`).val(response.item_info.parts_name).prop("disabled", true);
                     $(`#${pNo}`).val(response.item_info.parts_number).prop("disabled", true);
                     $(`#${sp}`).val(response.item_info.sell_price).prop("disabled", true);
@@ -172,26 +185,32 @@ $(document).ready(function () {
     };
 
     // "Order Confirm modal" ---------------------------
-    let item, qty
+    let item, qty, suppDate, custDate
     let order = {}; 
     $('#create').click(function () {
         for (i = 1; i <= 5; i++) {
             if ($(`#item${i}`).val() !== "" && $(`#qty${i}`).val() !== "") {
                 item = $(`#item${i}`).val();
                 qty = $(`#qty${i}`).val();
-                order[i] = [item, qty];
+                suppDate = $(`#suppDate${i}`).val();
+                custDate = $(`#custDate${i}`).val();
+                order[i] = [item, qty, suppDate, custDate];
                 
                 $("#orderConfirmTable > tbody:last-child").append(`
                     <tr>
-                        <td width="50%">${item}</td>
-                        <td width="50%">${qty}</td>
+                        <td width="20%">${item}</td>
+                        <td width="20%">${qty}</td>
+                        <td width="30%">${suppDate}</td>
+                        <td width="30%">${custDate}</td>
                     </tr>
                 `);
             } else if (Object.keys(order).length === 0){
                 $("#orderConfirmTable > tbody:last-child").append(`
                 <tr>
-                    <td width="50%">No Order</td>
-                    <td width="50%">No Order</td>
+                    <td width="20%">No Order</td>
+                    <td width="20%">No Order</td>
+                    <td width="30%">No Order</td>
+                    <td width="30%">No Order</td>
                 </tr>
                  `);
                 break
@@ -201,6 +220,7 @@ $(document).ready(function () {
         }
         console.log(order);
     });
+
     $('#close').click(function () {
         $("#orderConfirmTable tbody").empty();
     });
@@ -229,6 +249,89 @@ $(document).ready(function () {
     $('#cancel').click(function () {
         location.reload(); 
     });
+
+
+
+     // "Order Update " ---------------------------
+    $('button.update').click(function () {
+        var tr_id = $(this).data('id');
+        console.log(tr_id);
+        $.ajax({
+            url: `/order-update/${tr_id}/`,
+            type: 'get',
+            dataType: 'json',
+            success: function (response) {
+                console.log(response.cur_order);
+                console.log(response.order_number);
+                $("#orderUpdateTable > tbody:last-child").append(`
+                
+                <tr>
+                    <td><input class="form-control" id="form-id" type="" name="formId" readonly=True/></td>
+                    <td><input id="form-suppDelDate" class="form-control" type="text" name="suppDelDate" /></td>
+                    <td><input id="form-custDelDate" class="form-control" type="text" name="custDelDate" /></td>
+                    <td><input id="form-qty" class="form-control" type="text" name="qty" /></td>
+                </tr>
+                `);
+                
+                $('#form-id').val(response.cur_order.id);
+                $('#form-suppDelDate').val(response.cur_order.supplier_delivery_date);
+                $('#form-custDelDate').val(response.cur_order.customer_delivery_date);
+                $('#form-qty').val(response.cur_order.quantity);
+            },
+            error: function () {
+                console.log("error");
+            }
+        });
+        
+        $('#close').click(function () {
+            $("#orderUpdateTable tbody").empty();
+        });
+
+        $('#updateConfirm').click(function () {
+            var serializedData = $('#orderUpdateForm').serialize();
+            $.ajax({
+                url: '/order-list/',
+                type: 'post',
+                data: serializedData,
+                dataType: 'json',
+                success: function (response) {
+                    dataId = response.cur_order.id;
+                    let curSuppDelDate = $(`#suppDelDate-${dataId}`);
+                    let curCustDelDate = $(`#custDelDate-${dataId}`);
+                    let curQty = $(`#qty-${dataId}`);
+
+                    let newSuppDelDate = response.cur_order.supplier_delivery_date
+                    let newCustDelDate = response.cur_order.customer_delivery_date
+                    let newQty = response.cur_order.quantity
+                    
+                    
+                    if (curSuppDelDate.text() !== newSuppDelDate) {
+                        curSuppDelDate.text(newSuppDelDate).addClass('changed');  
+                    }
+                    if (curCustDelDate.text() !== newCustDelDate) {
+                        curCustDelDate.text(newCustDelDate).addClass('changed');
+                    }
+                    if (curQty.text() !== newQty) {
+                        curQty.text(newQty).addClass('changed');
+                    } 
+                    
+                    console.log(curSuppDelDate.text() == newSuppDelDate)
+                    console.log(curCustDelDate.text() == newCustDelDate) 
+                    console.log((curQty.text() === newQty));
+                    
+                    $("#orderUpdateTable tbody").empty();
+                },
+                error: function () {
+                    alert("error");
+                }
+            });
+
+        });
+    });
+    
+
+
+
     
 
 });

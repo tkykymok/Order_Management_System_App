@@ -39,3 +39,19 @@ ul li{
     background-color: #EEEEEE;
 }
 
+.login-form {
+    margin-top:200px;
+}
+
+
+.modal-custom {
+    max-width: 1000px;
+    margin: 1.75rem auto;
+}
+.col.bottom-btn {
+    padding-right: 0 !important;
+}
+
+.changed {
+    color: red;
+}

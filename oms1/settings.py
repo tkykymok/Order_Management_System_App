@@ -32,7 +32,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'omsapp.apps.OmsappConfig',
+    'omsapp',
+    'bootstrapform',
     'extra_views',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -124,7 +125,7 @@ USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = True
+USE_TZ = False
 
 
 # Static files (CSS, JavaScript, Images)
@@ -137,6 +138,12 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static')
 ]
+
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = 'login'
+
+
+AUTH_USER_MODEL = 'omsapp.User'
 
 try:
     from oms1.local_settings import *
