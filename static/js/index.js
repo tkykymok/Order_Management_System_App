@@ -1,9 +1,6 @@
-
-var csrfToken = $('input[name=csrfmiddlewaretoken]').val();
-
+// let csrfToken = $('input[name=csrfmiddlewaretoken]').val();
 
 $(document).ready(function () {
-
     //"PrjCodeInput" ---------------------------
     $('#prjCode').keypress(function (event) {
         if (event.keyCode === 13) {
@@ -28,22 +25,18 @@ $(document).ready(function () {
             });
         }
     });
-    
     //"createOrderNumber" ---------------------------
     $('#orderNumber').keypress(function (event) {
         if (event.keyCode === 13) {
             $('input[name="suppDelDate"]').focus();
         }
     });
+    // suppDelDate Validation -----------------------------
     $('input[name="suppDelDate"]').keypress(function (event) {
+        let date1 = $('input[name="suppDelDate"]')
         if (event.keyCode === 13) {
-            var date1 = $('input[name="suppDelDate"]').val();
-            if (date1.length === 8) {
-                var year1 = date1.slice(0, 4);
-                var month1 = date1.slice(4, 6);
-                var day1 = date1.slice(6, 8);
-                var validated1 = `${year1}-${month1}-${day1}`;
-                $('input[name="suppDelDate"]').val(validated1);
+            if (date1.val().length === 8) {
+                dateValidation(date1);
                 $('input[name="custDelDate"]').focus();
                 $('#suppDateCopy').val(date1);
             } else {
@@ -51,15 +44,12 @@ $(document).ready(function () {
             }
         }
     });
+    // custDelDate Validation -----------------------------
     $('input[name="custDelDate"]').keypress(function (event) {
+        let date2 = $('input[name="custDelDate"]')
         if (event.keyCode === 13) {
-            var date2 = $('input[name="custDelDate"]').val();
-            if (date2.length === 8) {
-                var year2 = date2.slice(0, 4);
-                var month2 = date2.slice(4, 6);
-                var day2 = date2.slice(6, 8);
-                var validated2 = `${year2}-${month2}-${day2}`;
-                $('input[name="custDelDate"]').val(validated2);
+            if (date2.val().length === 8) {
+                dateValidation(date2);
                 $('#enter1').focus();
                 $('#custDateCopy').val(date2);
             } else {
@@ -67,8 +57,9 @@ $(document).ready(function () {
             }
         }
     });
+    // Order Number Create ---------------------------
     $('#enter1').click(function () {
-        var serializedData = $('#createOrderNumber').serialize();
+        let serializedData = $('#createOrderNumber').serialize();
         $.ajax({
             url: '/order-number-create/',
             data: serializedData,
@@ -91,10 +82,7 @@ $(document).ready(function () {
             }
         });
     });
-
     // "Item Info Get" ---------------------------
-
-
     $('#item1').keypress(function () {
         if (event.keyCode === 13) {
             itemInfoGet('suppDate1', 'custDate1', 'pName1', 'pNo1', 'sp1', 'bp1', 'qty1');
@@ -151,43 +139,10 @@ $(document).ready(function () {
             dateGet('suppDate5', 'custDate5');
         }
     });
-
-
- 
-
-
-    function itemInfoGet(suppDate, custDate, pName, pNo, sp, bp, qty) {
-        let suppDelDate = $('#suppDate').val();
-        let custDelDate = $('#custDate').val();    
-        var serializedData = $('#orderContentForm').serialize();
-        $.ajax({
-            url: '/item-info-get/',
-            type: 'post',
-            data: serializedData,
-            dataType: 'json',
-            success: function (response) {
-                if ($('#prjCodeCopy').val() === response.prj) {
-                    $(`#${suppDate}`).val(suppDelDate);
-                    $(`#${custDate}`).val(custDelDate);
-                    $(`#${pName}`).val(response.item_info.parts_name).prop("disabled", true);
-                    $(`#${pNo}`).val(response.item_info.parts_number).prop("disabled", true);
-                    $(`#${sp}`).val(response.item_info.sell_price).prop("disabled", true);
-                    $(`#${bp}`).val(response.item_info.buy_price).prop("disabled", true);
-                    $(`#${qty}`).prop('disabled', false).focus();
-                } else {
-                    alert(`Please input valid Item Code. This Item Code is registered as ${response.prj}`);
-                }
-            },
-            error: function () {
-                alert("Please input valid Item Code.");
-            }
-        });
-    };
-
     // "Order Confirm modal" ---------------------------
-    let item, qty, suppDate, custDate
-    let order = {}; 
     $('#create').click(function () {
+        let item, qty, suppDate, custDate
+        let order = {}; 
         for (i = 1; i <= 5; i++) {
             if ($(`#item${i}`).val() !== "" && $(`#qty${i}`).val() !== "") {
                 item = $(`#item${i}`).val();
@@ -220,12 +175,6 @@ $(document).ready(function () {
         }
         console.log(order);
     });
-
-    $('#close').click(function () {
-        $("#orderConfirmTable tbody").empty();
-    });
-    
-    
     // "Order final confirm" ---------------------------
     $('#confirm').click(function () {
         var serializedData = $('#orderContentForm').serialize();
@@ -244,17 +193,26 @@ $(document).ready(function () {
             }
         });
     });
-
-    // "Cancel Button" ---------------------------
+    // "Cancel and reload" -----------------------
     $('#cancel').click(function () {
-        location.reload(); 
+        if (!confirm('Are you sure you want to Cancel?')) {
+            return false;
+        } else {
+            location.reload(); 
+        }
     });
-
-
-
-     // "Order Update " ---------------------------
+    // modal close and modal content delete
+    $('#close').click(function () {
+        $("#orderUpdateTable tbody").empty();
+    });
+    // modal close and modal content delete
+    $('#close').click(function () {
+        $("#orderConfirmTable tbody").empty();
+    });
+    // "Order Update " ---------------------------
     $('button.update').click(function () {
-        var tr_id = $(this).data('id');
+        console.log($('#form-delete').val());
+        let tr_id = $(this).data('id');
         console.log(tr_id);
         $.ajax({
             url: `/order-update/${tr_id}/`,
@@ -262,7 +220,6 @@ $(document).ready(function () {
             dataType: 'json',
             success: function (response) {
                 console.log(response.cur_order);
-                console.log(response.order_number);
                 $("#orderUpdateTable > tbody:last-child").append(`
                 
                 <tr>
@@ -270,6 +227,7 @@ $(document).ready(function () {
                     <td><input id="form-suppDelDate" class="form-control" type="text" name="suppDelDate" /></td>
                     <td><input id="form-custDelDate" class="form-control" type="text" name="custDelDate" /></td>
                     <td><input id="form-qty" class="form-control" type="text" name="qty" /></td>
+                    <td><input id="form-delete" class="form-control" type="checkbox"  name="deleteCheck" value="0" /></td>
                 </tr>
                 `);
                 
@@ -282,28 +240,51 @@ $(document).ready(function () {
                 console.log("error");
             }
         });
-        
-        $('#close').click(function () {
-            $("#orderUpdateTable tbody").empty();
-        });
-
-        $('#updateConfirm').click(function () {
-            var serializedData = $('#orderUpdateForm').serialize();
+    });
+    // Save Change or Delete -------------------------
+    $('#updateConfirm').click(function () {      
+        // Delete--------------------------------------
+        if ($('#form-delete').val() === "1") {
+            if (!confirm('Are you sure you want to delete this Order?')) {
+                return false;
+            } else {
+                let tr_id = $('#form-id').val();
+                $.ajax({
+                    url: '/order-delete/',
+                    type: 'get',
+                    data: {
+                        'id': tr_id
+                    },
+                    dataType: 'json',
+                    success: function (data) {
+                        if (data.deleted) {
+                            $(`#orderListTable #order-${tr_id}`).remove();
+                        }
+                    },
+                    error: function () {
+                        alert("error");
+                    }
+                }); 
+            }
+        // Update Save----------------------------------
+        } else if ($('#form-delete').val() === "0") {
+            let serializedData = $('#orderUpdateForm').serialize();
             $.ajax({
                 url: '/order-list/',
                 type: 'post',
                 data: serializedData,
                 dataType: 'json',
                 success: function (response) {
-                    dataId = response.cur_order.id;
+                    
+                    // modified data reflected with red color
+                    dataId = response.new_order.id;
                     let curSuppDelDate = $(`#suppDelDate-${dataId}`);
                     let curCustDelDate = $(`#custDelDate-${dataId}`);
                     let curQty = $(`#qty-${dataId}`);
-
-                    let newSuppDelDate = response.cur_order.supplier_delivery_date
-                    let newCustDelDate = response.cur_order.customer_delivery_date
-                    let newQty = response.cur_order.quantity
-                    
+    
+                    let newSuppDelDate = response.new_order.supplier_delivery_date;
+                    let newCustDelDate = response.new_order.customer_delivery_date;
+                    let newQty = response.new_order.quantity;
                     
                     if (curSuppDelDate.text() !== newSuppDelDate) {
                         curSuppDelDate.text(newSuppDelDate).addClass('changed');  
@@ -311,24 +292,74 @@ $(document).ready(function () {
                     if (curCustDelDate.text() !== newCustDelDate) {
                         curCustDelDate.text(newCustDelDate).addClass('changed');
                     }
-                    if (curQty.text() !== newQty) {
-                        curQty.text(newQty).addClass('changed');
+                    if (curQty.text() !== newQty.toLocaleString()) {
+                        curQty.text(newQty.toLocaleString()).addClass('changed');
                     } 
-                    
-                    console.log(curSuppDelDate.text() == newSuppDelDate)
-                    console.log(curCustDelDate.text() == newCustDelDate) 
-                    console.log((curQty.text() === newQty));
-                    
-                    $("#orderUpdateTable tbody").empty();
                 },
                 error: function () {
                     alert("error");
                 }
-            });
-
-        });
+            });    
+        } 
+        $("#orderUpdateTable tbody").empty();
     });
+
+
+
     
+
+    // Delete CheckBox Value Check ---------
+    $(function(){
+        $(document).on('change', '#form-delete', function () {
+            if ($(this).val() === "0") {
+                $(this).val("1")
+            } else {
+                $(this).val("0")
+            }
+        }); 
+    });
+    //--------------------------------------
+
+    // Order Entry Item info reflect -------------------------------------
+    function itemInfoGet(suppDate, custDate, pName, pNo, sp, bp, qty) {
+        let suppDelDate = $('#suppDate').val();
+        let custDelDate = $('#custDate').val();    
+        var serializedData = $('#orderContentForm').serialize();
+        $.ajax({
+            url: '/item-info-get/',
+            type: 'post',
+            data: serializedData,
+            dataType: 'json',
+            success: function (response) {
+                if ($('#prjCodeCopy').val() === response.prj) {
+                    $(`#${suppDate}`).val(suppDelDate).prop("readonly", false);
+                    $(`#${custDate}`).val(custDelDate).prop("readonly", false);
+                    $(`#${pName}`).val(response.item_info.parts_name).prop("disabled", true);
+                    $(`#${pNo}`).val(response.item_info.parts_number).prop("disabled", true);
+                    $(`#${sp}`).val(response.item_info.sell_price).prop("disabled", true);
+                    $(`#${bp}`).val(response.item_info.buy_price).prop("disabled", true);
+                    $(`#${qty}`).prop('disabled', false).focus();
+                } else {
+                    alert(`Please input valid Item Code. This Item Code is registered as ${response.prj}`);
+                }
+            },
+            error: function () {
+                alert("Please input valid Item Code.");
+            }
+        });
+    };
+    // Order Entry Item info reflect -------------------------------------
+
+
+    // date validation -----------------------------
+    function dateValidation(date) {
+        let year = date.val().slice(0, 4);
+        let month = date.val().slice(4, 6);
+        let day = date.val().slice(6, 8);
+        let validated = `${year}-${month}-${day}`;
+        date.val(validated);
+    }
+    //--------------------------------------
 
 
 

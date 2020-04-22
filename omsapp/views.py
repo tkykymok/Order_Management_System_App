@@ -88,36 +88,36 @@ class OrderListView(View, LoginRequiredMixin):
         return render(request, 'omsapp/order_list.html', context)
         
     def post(self, request):
+        # delete_check_val = request.POST.get('deleteCheck')
         get_id = request.POST.get('formId', None)
         new_supp_del_date = request.POST.get('suppDelDate', None)
         new_cust_del_date = request.POST.get('custDelDate', None)
         new_qty = request.POST.get('qty', None)
-        
-        cur_order = Order.objects.get(id=get_id)
-
-        cur_order.quantity = new_qty
-        cur_order.supplier_delivery_date = new_supp_del_date
-        cur_order.customer_delivery_date = new_cust_del_date 
-        cur_order.save()
                 
-        return JsonResponse({'cur_order':model_to_dict(cur_order)}, status=200)      
-
-       
+        new_order = Order.objects.get(id=get_id)
+        new_order.quantity = int(new_qty)
+        new_order.supplier_delivery_date = new_supp_del_date
+        new_order.customer_delivery_date = new_cust_del_date 
+        new_order.save()        
+            
+        return JsonResponse({'new_order':model_to_dict(new_order)}, status=200)  
+  
+class OrderDelete(View):
+    def get(self, request):
+        get_id = request.GET.get('id', None)
+        Order.objects.get(id=get_id).delete()
+        return JsonResponse({'deleted':True}, status=200)
+    
+            
+    
 
 class OrderUpdate(View):
     def get(self, request, id):
         cur_order = Order.objects.get(id=id)
-        order_number = cur_order.order_number
-        # cur_supp_del_date = cur_order.order_number.supplier_delivery_date
-        # cur_cust_del_date = cur_order.order_number.customer_delivery_date
-        # cur_qty = cur_order.quantity
-        print(cur_order)
-        print(order_number)
-        
-        return JsonResponse({'cur_order':model_to_dict(cur_order),'order_number':model_to_dict(order_number)}, status=200)
-    
+        return JsonResponse({'cur_order':model_to_dict(cur_order)}, status=200)
+ 
 
-        
+
 
     
     
