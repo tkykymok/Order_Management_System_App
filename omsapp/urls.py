@@ -11,10 +11,8 @@ urlpatterns = [
     path('order-confirm-create/', views.OrderCreateConfirm.as_view(), name='order_create_confirm'),
     path('order-list/', views.OrderListView.as_view(), name='order_list'),
     path('order-update/<str:id>/', views.OrderUpdate.as_view(), name='order_update'),
-    
-    
-    
-    
+    path('order-delete/', views.OrderDelete.as_view(), name='order_delete'),
+   
     # path('update/<str:pk>/', views.OrderUpdateView.as_view(), name='update'),
     # path('success/', views.SuccessView.as_view(), name='success'),
     

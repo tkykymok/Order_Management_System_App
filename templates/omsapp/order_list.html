@@ -7,7 +7,7 @@
 <div class="container-fluid">
         <div  class="col">
              <div class="ml-2 mt-3 mb-3"><h2>Order List</h2></div>
-                <table  class="table table-sm bg-light table-bordered table-striped">
+                <table id="orderListTable" class="table table-sm bg-light table-bordered table-striped">
                 <tr>
                     <th>PRJ Code</th>
                     <th>Order N/O</th>
@@ -15,9 +15,10 @@
                     <th>Item Code</th>
                     <th>Item Description</th>
                     <th>Maker P/N</th>
-                    <th>Unit Price</th>
+                    <th>B/P</th>
+                    <th>S/P</th>
                     <th>Qty</th>
-                    <th>Sales Amt</th>
+                    <!-- <th>Sales Amt</th> -->
                     <th>Supp Del Date</th>
                     <th>Cust Del Date</th>
                     <th>Supplier</th>
@@ -25,20 +26,21 @@
                     <th></th>
                 </tr>
                 {% for order in order_list %}
-                <tr class="orderList">
+                <tr id="order-{{order.id}}" class="orderList" data-id="{{order.id}}">
                     <td>{{ order.item_code.prj_code }}</td>
                     <td>{{ order.order_number }}</td>
                     <td>{{ order.item_code.customer }}</td>
                     <td>{{ order.item_code }}</td>
                     <td>{{ order.item_code.parts_name }}</td>
                     <td>{{ order.item_code.parts_number }}</td>
+                    <td>¥{{ order.item_code.buy_price }}</td>
                     <td>¥{{ order.item_code.sell_price }}</td>
                     <td id="qty-{{order.id}}">{{ order.quantity | intcomma }}</td>
-                    <td>¥{{ order.quantity | multiply:order.item_code.sell_price | intcomma}}</td>
+                    <!-- <td>¥{{ order.quantity | multiply:order.item_code.sell_price | intcomma}}</td> -->
                     <td id="suppDelDate-{{order.id}}">{{ order.supplier_delivery_date | date:"Y-m-j" }}</td>
                     <td id="custDelDate-{{order.id}}">{{ order.customer_delivery_date| date:"Y-m-j" }}</td>
                     <td>{{ order.item_code.supplier }}</td>
-                    <td>{{ order.order_number.user}}/{{ order.order_number.user.last_name}}</td>
+                    <td>{{ order.order_number.user}}</td>
                     <td class="text-center" ><button id="" type="button" class="btn btn-sm btn-info update" data-id="{{order.id}}" data-toggle="modal" data-target="#updateModal" href="">Update</button></td>
                 </tr>
                 {% endfor %}
@@ -62,19 +64,23 @@
             <form id="orderUpdateForm" action="" method="POST"> {% csrf_token %}                         
             <div class="modal-body">
                 <table id="orderUpdateTable" class="table table-bordered bg-light"  width="100">
-                    <tr class="text-center">
-
-                        <th>ID</th>    
-                        <th>Supplier Delivery date</th>    
-                        <th>Customer Delivery date</th>
-                        <th>QTY</th>
-                    </tr>
-
-
+                    <thead>
+                        <tr class="text-center">
+                            <th>ID</th>    
+                            <th>Supplier Delivery date</th>    
+                            <th>Customer Delivery date</th>
+                            <th>QTY</th>
+                            <th>Delete</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        
+                    </tbody>
                 </table>
             </div>
             <div class="modal-footer">
                 <button id="close" type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <!-- <button id="deleteOrder" type="button" class="btn btn-danger" data-dismiss="modal" >Delete</button> -->
                 <button id="updateConfirm" type="button" class="btn btn-primary" data-dismiss="modal" >Confirm</button>
             </div>
             </form>
