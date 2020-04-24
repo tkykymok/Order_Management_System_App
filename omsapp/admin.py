@@ -39,7 +39,7 @@ class ItemAdmin(admin.ModelAdmin):
     list_per_page = 25 
 
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('id', 'order_number','supplier_delivery_date','customer_delivery_date','item_code', 'quantity')
+    list_display = ('id', 'order_number','supplier_delivery_date','customer_delivery_date','item_code', 'quantity','balance')
     list_display_links = ('order_number',)
     list_filter = ('order_number', )
     list_per_page = 25 
@@ -59,7 +59,8 @@ admin.site.register(Project)
 admin.site.register(Item, ItemAdmin)
 admin.site.register(Order,OrderAdmin)
 admin.site.register(OrderNumber, OrderNumberAdmin)
-
+admin.site.register(Shipping)
+admin.site.register(Receiving)
 
 
     

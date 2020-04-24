@@ -153,10 +153,9 @@ class Item(models.Model):
     sell_price = models.DecimalField(max_digits=9, decimal_places=2)
     buy_price = models.DecimalField(max_digits=9, decimal_places=2)
     date_created = models.DateTimeField(default=datetime.now)
+    stock = models.IntegerField(default=0)
     def __str__(self):
         return self.item_code
-
-
 
 class OrderNumber(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -165,7 +164,6 @@ class OrderNumber(models.Model):
     
     def __str__(self):
         return self.order_number
-    
 
 class Order(models.Model):
     order_number = models.ForeignKey(OrderNumber, on_delete=models.CASCADE)
@@ -173,9 +171,25 @@ class Order(models.Model):
     quantity = models.IntegerField()
     supplier_delivery_date = models.DateField(default=datetime.today)
     customer_delivery_date = models.DateField(default=datetime.today)
+    shipping_qty = models.IntegerField(default=0)
+    receiving_qty = models.IntegerField(default=0)
+    balance = models.IntegerField(default=0)
     
-     
     def __str__(self):
         return str(self.order_number)
 
-    
+class Shipping(models.Model):
+    order_number = models.ForeignKey(OrderNumber, on_delete=models.CASCADE)
+    item_code = models.ForeignKey(Item, on_delete=models.CASCADE)
+    shipping_qty = models.IntegerField(default=0)
+    shipped_date = models.DateField(default=datetime.today)
+    def __str__(self):
+        return str(self.order_number)
+
+class Receiving(models.Model):
+    order_number = models.ForeignKey(OrderNumber, on_delete=models.CASCADE)
+    item_code = models.ForeignKey(Item, on_delete=models.CASCADE)
+    receiving_qty = models.IntegerField(default=0)
+    received_date = models.DateField(default=datetime.today)
+    def __str__(self):
+        return str(self.order_number)

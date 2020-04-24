@@ -18,7 +18,9 @@
                     <th>B/P</th>
                     <th>S/P</th>
                     <th>Qty</th>
-                    <!-- <th>Sales Amt</th> -->
+                    <th>Shipped</th>
+                    <th>Received</th>
+                    <th>Balance</th>
                     <th>Supp Del Date</th>
                     <th>Cust Del Date</th>
                     <th>Supplier</th>
@@ -36,7 +38,9 @@
                     <td>¥{{ order.item_code.buy_price }}</td>
                     <td>¥{{ order.item_code.sell_price }}</td>
                     <td id="qty-{{order.id}}">{{ order.quantity | intcomma }}</td>
-                    <!-- <td>¥{{ order.quantity | multiply:order.item_code.sell_price | intcomma}}</td> -->
+                    <td>{{ order.shipping_qty | intcomma}}</td>
+                    <td>{{ order.receiving_qty | intcomma}}</td>
+                    <td>{{ order.balance | intcomma }}</td>
                     <td id="suppDelDate-{{order.id}}">{{ order.supplier_delivery_date | date:"Y-m-j" }}</td>
                     <td id="custDelDate-{{order.id}}">{{ order.customer_delivery_date| date:"Y-m-j" }}</td>
                     <td>{{ order.item_code.supplier }}</td>
@@ -47,9 +51,6 @@
                 </table>
         </div>
 </div>
-
-
-
 
 <!-- Modal -->
 <div class="modal fade" id="updateModal" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel" aria-hidden="true">
