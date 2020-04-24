@@ -6,17 +6,17 @@
 <div class="container">
     <div class="ml-2 mt-3 mb-3"><h2>Order Entry</h2></div>
         <div class="row mb-2 bg-light" >
-            <form id="createOrderNumber" method="post"> {% csrf_token %}
+            <form id="createOrderNumber" class="entry-form" method="post"> {% csrf_token %}
                 <table class="table table-borderless bg-light"  width="100">
                     <tr>
-                        <th class="test1">PRJ Code</th>
                         <th class="text1" >Order No </th>
+                        <th class="test1">PRJ Code</th>
                         <th class="text1">Customer</th>
                         <th class="text1">PIC</th>
                     </tr>
                     <tr>
-                        <td><input id="prjCode" class="form-control" type="text" name="prjCode" placeholder="" maxlength="4" /></td>
                         <td><input id="orderNumber" class="form-control" type="text" name="orderNumber" placeholder="" maxlength="8"/></td>
+                        <td><input id="prjCode" class="form-control" type="text" name="prjCode" placeholder="" maxlength="4" /></td>
                         <td><input id='customer' class="form-control" type="text" name="customer" placeholder="" readonly=True /></td>
                         <td><input id="pic" class="form-control" type="text" name="pic" placeholder="" maxlength="4" readonly=True/></td>
                     </tr>
@@ -106,20 +106,19 @@
                         </tr>
                     </form>
                 </table>
-            
-                <!-- Button trigger modal -->
          
-                   <div class="col bottom-btn">
-                       <div class="col-2 float-right ">
-                           <button id="create" type="button" class="btn btn-primary btn-block" data-toggle="modal" data-target="#exampleModal">Order Create</button>
-                       </div>       
-                       <div class="col-2 float-right">
-                           <button id="cancel" type="button" class="btn btn-dark btn-block mr-3">Cnacel</button>
-                       </div>
-                   </div>
+                <div class="col bottom-btn">
+                    <div class="col-2 float-right ">
+                        <button id="confirm" type="button" class="btn btn-primary btn-block">Confirm</button>
+                        <!-- <button id="create" type="button" class="btn btn-primary btn-block" data-toggle="modal" data-target="#exampleModal">Order Create</button> -->
+                    </div>       
+                    <div class="col-2 float-right">
+                        <button id="cancel" type="button" class="btn btn-dark btn-block mr-3">Cnacel</button>
+                    </div>
+                </div>
             
-                <!-- Modal -->
-               <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <!-- Modal 削除-->
+               <!-- <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-custom" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -139,9 +138,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- <tr>
-                                        
-                                    </tr> -->
+                            
                                 </tbody>
                             </table>
                         </div>
@@ -151,10 +148,7 @@
                         </div>
                     </div>
                     </div>
-                </div>
-
-
-
+                </div> -->
          </div>
     </div>
         

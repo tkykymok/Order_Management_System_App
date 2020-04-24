@@ -6,7 +6,7 @@ from django.views.generic import (
     DetailView,
     UpdateView
 )
-from omsapp.models import Order, Item, OrderNumber, Order, Project, User
+from omsapp.models import Order, Item, OrderNumber, Order, Project, User, Shipping, Receiving
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from django.urls import reverse_lazy
@@ -23,7 +23,7 @@ class MenuView(View,LoginRequiredMixin):
         return render(request, 'omsapp/menu.html')
 
     
-class OrderCreateView(View, LoginRequiredMixin):
+class OrderEntryView(View, LoginRequiredMixin):
     def get(self,request):
         return render(request, 'omsapp/order_entry.html')
 
@@ -70,22 +70,21 @@ class OrderCreateConfirm(View, LoginRequiredMixin):
             if items[i] == "":
                 break
             else:      
-                new_order = Order.objects.create(
+                Order.objects.create(
                     order_number = OrderNumber.objects.get(order_number=input_order_number),
                     item_code = Item.objects.get(item_code = items[i]),
                     quantity = qtys[i],
                     supplier_delivery_date = suppDates[i],
-                    customer_delivery_date = custDates[i]
+                    customer_delivery_date = custDates[i],
+                    balance = qtys[i]
                 )
-                
-            
-        return JsonResponse({'result':'ok'}, status=200)
+        return JsonResponse({'result':True}, status=200)
 
-class OrderListView(View, LoginRequiredMixin):
+class OrderInfoView(View, LoginRequiredMixin):
     def get(self, request):
         order_list = Order.objects.all()
         context = {'order_list':order_list}
-        return render(request, 'omsapp/order_list.html', context)
+        return render(request, 'omsapp/order_info.html', context)
         
     def post(self, request):
         # delete_check_val = request.POST.get('deleteCheck')
@@ -107,17 +106,87 @@ class OrderDelete(View):
         get_id = request.GET.get('id', None)
         Order.objects.get(id=get_id).delete()
         return JsonResponse({'deleted':True}, status=200)
-    
-            
-    
 
 class OrderUpdate(View):
     def get(self, request, id):
         cur_order = Order.objects.get(id=id)
         return JsonResponse({'cur_order':model_to_dict(cur_order)}, status=200)
+    
+class ShipmentEntryView(View):
+    def get(self, request):
+        return render(request, 'omsapp/shipment_entry.html')
+    
+class ShipmentDataGet(View):
+    def get(self, request):
+        input_order_number = request.GET.get('shipOrderNumber', None)
+        parent_order_number = OrderNumber.objects.get(order_number = input_order_number)
+        order_set = Order.objects.filter(order_number=parent_order_number)
+        pic = request.user
+        order_data = []
+        item_codes = []
+        item_data = []
+        
+        for i in order_set:
+            order_data.append(model_to_dict(i))
+            item_codes.append(i.item_code)
+        for i in item_codes:
+            item_data.append(model_to_dict(i))
+        
+        prj_code = item_codes[0].prj_code
+        customer = item_codes[0].prj_code.customer_code
+        
+        return JsonResponse({
+            'order_data':order_data,
+            'item_data':item_data,
+            'pic':model_to_dict(pic),
+            'prj_code':model_to_dict(prj_code),
+            'customer':model_to_dict(customer)
+            }, status=200)
+
+class ShipmentComplete(View):
+    def post(self, request):
+        input_order_number = request.POST.get('orderNumber', None)
+        
+        order_id = request.POST.getlist('orderId', None)
+        item_code_list = request.POST.getlist('shipItem', None)
+        ship_date_list = request.POST.getlist('shipDate2', None)
+        ship_qty_list = request.POST.getlist('shipQty', None)
+        
+        for i in range(len(ship_qty_list)):
+            if ship_qty_list[i] == "":
+                break
+            else:      
+                Shipping.objects.create(
+                    order_number = OrderNumber.objects.get(order_number=input_order_number),
+                    item_code = Item.objects.get(item_code=item_code_list[i]),
+                    shipped_date = ship_date_list[i],
+                    shipping_qty = int(ship_qty_list[i]),
+                )
+        
+                
+        for i in range(len(order_id)):
+            order_data = Order.objects.get(id=int(order_id[i]))
+            if ship_qty_list[i] == '':
+                pass
+            else:
+                order_data.shipping_qty += int(ship_qty_list[i])
+                order_data.balance -= int(ship_qty_list[i])
+                
+                order_data.save()
+        
+        return JsonResponse({'result':True}, status=200)
+        
+    
+    
  
 
-
+# [
+#     {'id': 27, 'order_number': 32, 'item_code': 1, 'quantity': 1000, 'supplier_delivery_date': datetime.date(2020, 5, 20), 'customer_delivery_date': datetime.date(2020, 5, 20), 'shipping': 0, 'receiving': 0, 'balance': 0},
+    
+#     {'id': 28, 'order_number': 32, 'item_code': 2, 'quantity': 2000, 'supplier_delivery_date': datetime.date(2020, 5, 20), 'customer_delivery_date': datetime.date(2020, 5, 20), 'shipping': 0, 'receiving': 0, 'balance': 0}, 
+    
+#     {'id': 29, 'order_number': 32, 'item_code': 3, 'quantity': 3000, 'supplier_delivery_date': datetime.date(2020, 5, 20), 'customer_delivery_date': datetime.date(2020, 5, 20), 'shipping': 0, 'receiving': 0, 'balance': 0}
+# ]
 
     
     

@@ -4,7 +4,7 @@ $(document).ready(function () {
     //"PrjCodeInput" ---------------------------
     $('#prjCode').keypress(function (event) {
         if (event.keyCode === 13) {
-            var serializedData = $('#createOrderNumber').serialize();
+            let serializedData = $('#createOrderNumber').serialize();
             $.ajax({
                 url: '/prj-code-get/',
                 data: serializedData,
@@ -15,8 +15,8 @@ $(document).ready(function () {
                     var customerName = response.customer_info.name
                     var personIncharge = response.person_incharge.username
                     $('#customer').val(customerCode + '/' + customerName )
-                    $('#pic').val(personIncharge )
-                    $('#orderNumber').focus();
+                    $('#pic').val(personIncharge)
+                    $('input[name="suppDelDate"]').focus();
                     $('#prjCode').prop("disabled", true);
                 },
                 error: function () {
@@ -28,33 +28,25 @@ $(document).ready(function () {
     //"createOrderNumber" ---------------------------
     $('#orderNumber').keypress(function (event) {
         if (event.keyCode === 13) {
-            $('input[name="suppDelDate"]').focus();
+            $('#prjCode').focus();
         }
     });
     // suppDelDate Validation -----------------------------
     $('input[name="suppDelDate"]').keypress(function (event) {
-        let date1 = $('input[name="suppDelDate"]')
+        let date1 = $('input[name="suppDelDate"]');
+        let next1 = $('input[name="custDelDate"]');
         if (event.keyCode === 13) {
-            if (date1.val().length === 8) {
-                dateValidation(date1);
-                $('input[name="custDelDate"]').focus();
-                $('#suppDateCopy').val(date1);
-            } else {
-                alert('Validation Error!');
-            }
+            dateValidation(date1, next1);
+            $('#suppDateCopy').val(date1);
         }
     });
     // custDelDate Validation -----------------------------
     $('input[name="custDelDate"]').keypress(function (event) {
-        let date2 = $('input[name="custDelDate"]')
+        let date2 = $('input[name="custDelDate"]');
+        let next2 = $('#enter1');
         if (event.keyCode === 13) {
-            if (date2.val().length === 8) {
-                dateValidation(date2);
-                $('#enter1').focus();
-                $('#custDateCopy').val(date2);
-            } else {
-                alert('Validation Error!');
-            }
+            dateValidation(date2, next2);
+            $('#custDateCopy').val(date2);
         }
     });
     // Order Number Create ---------------------------
@@ -66,8 +58,8 @@ $(document).ready(function () {
             type: 'post',
             dataType: 'json',
             success: function (response) {
-                var orderNumber = $('#orderNumber').val();
-                var prjCode = $('#prjCode').val();
+                let orderNumber = $('#orderNumber').val();
+                let prjCode = $('#prjCode').val();
                 $('#orderNumCopy').val(orderNumber);
                 $('#prjCodeCopy').val(prjCode);
 
@@ -177,21 +169,25 @@ $(document).ready(function () {
     });
     // "Order final confirm" ---------------------------
     $('#confirm').click(function () {
-        var serializedData = $('#orderContentForm').serialize();
-
-        $.ajax({
-            url: '/order-confirm-create/',
-            type: 'post',
-            data: serializedData,
-            dataType: 'json',
-            success: function (response) {
-                console.log(response.result);
-                location.reload();
-            },
-            error: function () {
-                alert("error");
-            }
-        });
+        let serializedData = $('#orderContentForm').serialize();
+        if (!confirm('Do you Create Order?')) {
+            return false;
+        } else {
+            $.ajax({
+                url: '/order-confirm-create/',
+                type: 'post',
+                data: serializedData,
+                dataType: 'json',
+                success: function (response) {
+                    if (response.result) {
+                        location.reload();
+                    }
+                },
+                error: function () {
+                    alert("error");
+                }
+            });
+        }
     });
     // "Cancel and reload" -----------------------
     $('#cancel').click(function () {
@@ -305,9 +301,6 @@ $(document).ready(function () {
     });
 
 
-
-    
-
     // Delete CheckBox Value Check ---------
     $(function(){
         $(document).on('change', '#form-delete', function () {
@@ -320,11 +313,11 @@ $(document).ready(function () {
     });
     //--------------------------------------
 
-    // Order Entry Item info reflect -------------------------------------
+    // Order Entry Item info reflect -------
     function itemInfoGet(suppDate, custDate, pName, pNo, sp, bp, qty) {
         let suppDelDate = $('#suppDate').val();
         let custDelDate = $('#custDate').val();    
-        var serializedData = $('#orderContentForm').serialize();
+        let serializedData = $('#orderContentForm').serialize();
         $.ajax({
             url: '/item-info-get/',
             type: 'post',
@@ -348,21 +341,142 @@ $(document).ready(function () {
             }
         });
     };
-    // Order Entry Item info reflect -------------------------------------
+    // -------------------------------------
 
 
-    // date validation -----------------------------
-    function dateValidation(date) {
-        let year = date.val().slice(0, 4);
-        let month = date.val().slice(4, 6);
-        let day = date.val().slice(6, 8);
-        let validated = `${year}-${month}-${day}`;
-        date.val(validated);
-    }
+    // Ship Data Get ---------------------
+    $('#shipOrderNumber').keypress(function (event) {
+        let shipOrderNumber = $('#shipOrderNumber').val();
+        if (event.keyCode === 13) {
+            $.ajax({
+                url: '/shipment-data-get/',
+                type: 'get',
+                data: {
+                    'shipOrderNumber': shipOrderNumber
+                },
+                dataType: 'json',
+                success: function (response) {
+                    let orderNumber = $('#shipOrderNumber').val();
+                    $('#orderNumCopy').val(orderNumber);
+                    $('#shipPrjCode').val(response.prj_code.prj_code);
+                    $('#shipCustomer').val(response.customer.name);
+                    $('#shipPic').val(response.pic.username);
+                    $('#shipOrderNumber').prop('readonly', true)
+                    $('#shipDate').focus();
+                    $('#shipDate').keypress(function (event) {
+                        if (event.keyCode === 13) {
+                            let shipDate = $('input[name="shipDate"]');
+                            let next3 = $('#enter2');
+                            dateValidation(shipDate, next3);
+                        }
+                    });
+
+                    let dataLength = response.order_data.length;
+                    $('#enter2').click(function () {
+                        for (i = 0; i < dataLength; i++) {
+                            if (response.order_data[i].balance === 0) {
+                                continue
+                            } else {
+                                $("#shipmentEntryTable > tbody:last-child").append(`  
+                                <tr>
+                                    <input id="orderId-${i}" class="form-control" type="hidden" name="orderId" readonly=True >
+                                    <td><input id="shipItem-${i}" class="form-control" type="text" name="shipItem" maxlength="5" readonly=True ></td>
+                                    <td><input id="shipDate-${i}" class="form-control" type="text" name="shipDate2" maxlength="10"></td>
+                                    <td><input id="shipPName-${i}" class="form-control form-control" type="text" readonly=True></td>
+                                    <td><input id="shipPNo-${i}" class="form-control" type="text" readonly=True></td>
+                                    <td><input id="shipSp-${i}" class="form-control" type="text" readonly=True></td>
+                                    <td><input id="orderBal-${i}" class="form-control" type="text" readonly=True></td>
+                                    <td><input id="shipQty-${i}" class="form-control"  type="text" name="shipQty"></td>
+                                </tr>
+                                `)
+                                $(`#orderId-${i}`).val(response.order_data[i].id);
+                                $(`#shipItem-${i}`).val(response.item_data[i].item_code);
+                                $(`#shipDate-${i}`).val($('#shipDate').val());
+                                $(`#shipPName-${i}`).val(response.item_data[i].parts_name);
+                                $(`#shipPNo-${i}`).val(response.item_data[i].parts_number);
+                                $(`#shipSp-${i}`).val(response.item_data[i].sell_price);
+                                $(`#orderBal-${i}`).val(response.order_data[i].balance);    
+                            }
+                        }
+                        $('#enter2').hide();
+                        $(`#shipQty-0`).focus();
+                        
+                        qtyValCheck(0);
+                        qtyValCheck(1);
+                        qtyValCheck(2);
+                        qtyValCheck(3);
+                        qtyValCheck(4);
+                        qtyValCheck(5);
+           
+                        function qtyValCheck(n) {
+                            $(`#shipQty-${n}`).keypress(function (event) {
+                                if (event.keyCode === 13) {
+                                    if ( $(`#orderBal-${n}`).val() < $(`#shipQty-${n}`).val()) {
+                                        alert("Ship Qty must be less than PO Balance.");
+                                    } else {
+                                        if ($(`#shipQty-${n + 1}`).length === 1) {
+                                            $(`#shipQty-${n + 1}`).focus();
+                                            n += 1;
+                                        } else {
+                                            $('#shipConfirm').focus();
+                                        }          
+                                    }
+                                }
+                            });
+                        }
+                    });
+                },
+                error: function () {
+                    alert("Please input valid Order Number.");
+                }
+            });
+        }
+    });
+    // -------------------------------------
+
+
+    // Shipment Confirm --------------------
+    $(function(){
+        $('#shipConfirm').click(function () {
+            let serializedData = $('#shipmentEntryForm').serialize();        
+            if (!confirm('Do you Proceed?')) {
+                return false;
+            } else {
+                $.ajax({
+                    url: '/shipment-complete/',
+                    data: serializedData,
+                    type: 'post',
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.result) {
+                            location.reload();
+                        }
+                    },
+                    error: function () {
+                        alert("error");
+                    }
+                });  
+            }
+        });
+    });
+    // -------------------------------------
+
+
+    // date validation ---------------------
+    function dateValidation(date,next) {
+        if (date.val().length === 8) {
+            let year = date.val().slice(0, 4);
+            let month = date.val().slice(4, 6);
+            let day = date.val().slice(6, 8);
+            let validated = `${year}-${month}-${day}`;
+            date.val(validated);
+            next.focus();
+        }  else {
+            alert('Validation Error!');
+        }
+    };
     //--------------------------------------
-
-
-
-    
-
 });
+
+
+// $("#orderConfirmTable > tbody:last-child").append(`

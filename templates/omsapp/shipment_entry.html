@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+
+<div class="container">
+    <div class="ml-2 mt-3 mb-3"><h2>Shipment Entry</h2></div>
+        <div class="row mb-2 bg-light" >
+            <form id="" class="entry-form" method="post"> {% csrf_token %}
+                <table class="table table-borderless bg-light"  width="100">
+                    <tr>
+                        <th class="text1" >Order No </th>
+                        <th class="test1">PRJ Code</th>
+                        <th class="text1">Customer</th>
+                        <th class="text1">PIC</th>
+                    </tr>
+                    <tr>
+                        <td><input id="shipOrderNumber" class="form-control" type="text" name="shipOrderNumber" placeholder="" maxlength="8"/></td>
+                        <td><input id="shipPrjCode" class="form-control" type="text" name="prjCode" placeholder="" maxlength="4" readonly=True/></td>
+                        <td><input id='shipCustomer' class="form-control" type="text" name="customer" placeholder="" readonly=True /></td>
+                        <td><input id="shipPic" class="form-control" type="text" name="pic" placeholder="" maxlength="4" readonly=True/></td>
+                    </tr>
+                    <tr>
+                        <th>Ship date</th>    
+                        <th></th>
+                        
+                    </tr>
+                    <tr>
+                        <td><input id="shipDate" class="form-control" type="text" name="shipDate" placeholder="yyyymmdd" /></td>
+                        <td><button id="enter2" type="button" class="btn btn-outline-dark btn-block " >Enter</button></td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+
+        <div class="row" >
+            <form id="shipmentEntryForm" class="entry-form" action="" method="POST"> {% csrf_token %}
+                <input id="orderNumCopy" class="" type="hidden" name="orderNumber">
+                <table id="shipmentEntryTable" class="table table-bordered bg-light"  width="100"> 
+                    <tr class="text-center">
+                        <th>Item Code</th>
+                        <th>Ship Date</th>
+                        <th>Parts Name</th>
+                        <th>Parts Number</th>
+                        <th>S/P</th>
+                        <th>PO Bal</th>
+                        <th>Ship Qty</th>
+                    </tr>
+                
+            
+                </table>
+            </form>
+                <div class="col bottom-btn">
+                    <div class="col-2 float-right ">
+                    <button id="shipConfirm" type="button" class="btn btn-primary btn-block">Confirm</button>
+                    </div>       
+                    <div class="col-2 float-right">
+                        <button id="cancel" type="button" class="btn btn-dark btn-block mr-3">Cnacel</button>
+                    </div>
+                </div>
+         </div>
+    </div>
+{% endblock %}
