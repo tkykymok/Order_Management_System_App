@@ -50,6 +50,12 @@ class OrderNumberAdmin(admin.ModelAdmin):
     list_filter = ('order_number', )
     list_per_page = 25 
     
+class ShipmentAdmin(admin.ModelAdmin):
+    list_display = ('id', 'order_number', 'item_code', 'shipment_qty', 'shipped_date')
+    list_display_links = ('order_number',)
+    list_filter = ('order_number', )
+    list_per_page = 25 
+    
 
 
 admin.site.register(User, CustomUserAdmin)
@@ -59,8 +65,8 @@ admin.site.register(Project)
 admin.site.register(Item, ItemAdmin)
 admin.site.register(Order,OrderAdmin)
 admin.site.register(OrderNumber, OrderNumberAdmin)
-admin.site.register(Shipping)
-admin.site.register(Receiving)
+admin.site.register(Shipment,ShipmentAdmin)
+admin.site.register(Acceptance)
 
 
     

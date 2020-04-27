@@ -27,12 +27,30 @@ ul {
     margin: 0 auto;
 }
 
+.check-box {
+    width: 20px;
+    height: 20px;
+    margin: 5px 5px;
+}
+
+#pic{
+    margin: 5px 5px;
+}
+
+.delete-check-box {
+    padding: 12px 2px !important;
+}
+
+
 ul li{ 	
     display: inline;
  } 
 
 .entry-form{
     width: 100%;
+}
+.entry-contaniner{
+    padding: 0 100px !important;
 }
 
 
@@ -51,8 +69,20 @@ ul li{
 }
 .col.bottom-btn {
     padding-right: 0 !important;
+    padding-left: 0 !important;
 }
 
 .changed {
     color: red;
+}
+
+#lineAdd {
+    display: none;
+}
+#lineDelete {
+    display: none;
+}
+
+#orderContentForm {
+    width: 100%;
 }

@@ -171,25 +171,27 @@ class Order(models.Model):
     quantity = models.IntegerField()
     supplier_delivery_date = models.DateField(default=datetime.today)
     customer_delivery_date = models.DateField(default=datetime.today)
-    shipping_qty = models.IntegerField(default=0)
-    receiving_qty = models.IntegerField(default=0)
+    shipment_qty = models.IntegerField(default=0)
+    acceptance_qty = models.IntegerField(default=0)
     balance = models.IntegerField(default=0)
     
     def __str__(self):
         return str(self.order_number)
 
-class Shipping(models.Model):
+class Shipment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     order_number = models.ForeignKey(OrderNumber, on_delete=models.CASCADE)
     item_code = models.ForeignKey(Item, on_delete=models.CASCADE)
-    shipping_qty = models.IntegerField(default=0)
+    shipment_qty = models.IntegerField(default=0)
     shipped_date = models.DateField(default=datetime.today)
     def __str__(self):
         return str(self.order_number)
 
-class Receiving(models.Model):
+class Acceptance(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     order_number = models.ForeignKey(OrderNumber, on_delete=models.CASCADE)
     item_code = models.ForeignKey(Item, on_delete=models.CASCADE)
-    receiving_qty = models.IntegerField(default=0)
-    received_date = models.DateField(default=datetime.today)
+    acceptance_qty = models.IntegerField(default=0)
+    accepted_date = models.DateField(default=datetime.today)
     def __str__(self):
         return str(self.order_number)

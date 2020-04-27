@@ -5,15 +5,42 @@
 {% block content %}
 
 <div class="container-fluid">
-        <div  class="col">
-             <div class="ml-2 mt-3 mb-3"><h2>Order List</h2></div>
-                <table id="orderListTable" class="table table-sm bg-light table-bordered table-striped">
+    <div class="ml-2 mt-3 mb-3">
+        <h2>Order List</h2>
+    </div>
+    <div class="row">
+        <div class="col-6">
+        <form id="" class="entry-form" method="GET"> 
+            <table id="orderListTable" class="table table-sm bg-light table-bordered table-striped">
+                <tr>
+                    <th width="15%" >PRJ Code</th>
+                    <th>Order No.</th>
+                    <th>Order Date/Start </th>
+                    <th>Order Date/End</th>
+                    <th></th>
+                </tr>
+                <tr>
+                    <td><input id="sortPrjCode" class="form-control" type="text" name="prjCode" placeholder="" maxlength="4" value="{{prj_code}}"/></td>
+                    <td><input id="sortOrderNum" class="form-control" type="text" name="orderNum" placeholder="" maxlength="8" value="{{order_number}}"/></td>
+                    <td><input id="sortOrderDateS" class="form-control" type="text" name="orderDateS" placeholder="yyyymmdd" maxlength="10" value="{{order_date_s}}"/></td>
+                    <td><input id="sortOrderDateE" class="form-control" type="text" name="orderDateE" placeholder="yyyymmdd" maxlength="10" value="{{order_date_e}}" /></td>
+                    <td><button id="enter3" type="submit" class="btn btn-outline-dark btn-block">Enter</button></td>
+                </tr>
+            </table>
+        </form>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col">
+            <table id="orderListTable" class="table table-sm bg-light table-bordered table-striped">
                 <tr>
                     <th>PRJ Code</th>
-                    <th>Order N/O</th>
+                    <th>Order No</th>
+                    <th>Order Date</th>
                     <th>Customer</th>
                     <th>Item Code</th>
-                    <th>Item Description</th>
+                    <th>Description</th>
                     <th>Maker P/N</th>
                     <th>B/P</th>
                     <th>S/P</th>
@@ -25,35 +52,41 @@
                     <th>Cust Del Date</th>
                     <th>Supplier</th>
                     <th>PIC</th>
-                    <th></th>
+                    <!-- <th></th> -->
                 </tr>
-                {% for order in order_list %}
-                <tr id="order-{{order.id}}" class="orderList" data-id="{{order.id}}">
-                    <td>{{ order.item_code.prj_code }}</td>
-                    <td>{{ order.order_number }}</td>
-                    <td>{{ order.item_code.customer }}</td>
-                    <td>{{ order.item_code }}</td>
-                    <td>{{ order.item_code.parts_name }}</td>
-                    <td>{{ order.item_code.parts_number }}</td>
-                    <td>¥{{ order.item_code.buy_price }}</td>
-                    <td>¥{{ order.item_code.sell_price }}</td>
-                    <td id="qty-{{order.id}}">{{ order.quantity | intcomma }}</td>
-                    <td>{{ order.shipping_qty | intcomma}}</td>
-                    <td>{{ order.receiving_qty | intcomma}}</td>
-                    <td>{{ order.balance | intcomma }}</td>
-                    <td id="suppDelDate-{{order.id}}">{{ order.supplier_delivery_date | date:"Y-m-j" }}</td>
-                    <td id="custDelDate-{{order.id}}">{{ order.customer_delivery_date| date:"Y-m-j" }}</td>
-                    <td>{{ order.item_code.supplier }}</td>
-                    <td>{{ order.order_number.user}}</td>
-                    <td class="text-center" ><button id="" type="button" class="btn btn-sm btn-info update" data-id="{{order.id}}" data-toggle="modal" data-target="#updateModal" href="">Update</button></td>
+                
+                {% for index, row in order_list.iterrows %}
+                <tr>
+                    <td>{{ row.prj_code }}</td>
+                    <td>{{ row.order_number }}</td>
+                    <td>{{ row.date_created | date:"Y-m-d"}}</td>
+                    <td>{{ row.customer }}</td>
+                    <td>{{ row.item_code }}</td>
+                    <td>{{ row.parts_name }}</td>
+                    <td>{{ row.parts_number }}</td>
+                    <td>{{ row.buy_price }}</td>
+                    <td>{{ row.sell_price }}</td>
+                    <td id="qty-{{row.id}}">{{ row.quantity | intcomma }}</td>
+                    <td>{{ row.shipment_qty | intcomma }}</td>
+                    <td>{{ row.acceptance_qty | intcomma }}</td>
+                    <td>{{ row.balance | intcomma }}</td>
+                    <td id="suppDelDate-{{row.id}}">{{ row.supplier_delivery_date| date:"Y-m-d" }}</td>
+                    <td id="custDelDate-{{row.id}}">{{ row.customer_delivery_date| date:"Y-m-d" }}</td>
+                    <td>{{ row.supplier }}</td>
+                    <td>{{ row.user }}</td>
+                    <!-- <td class="text-center"><button id="" type="button" class="btn btn-sm btn-info update"
+                        data-id="{{row.id}}" data-toggle="modal" data-target="#updateModal"
+                        href="">Update</button></td>  削除--> 
                 </tr>
                 {% endfor %}
-                </table>
+            </table>
         </div>
+    </div>
 </div>
 
-<!-- Modal -->
-<div class="modal fade" id="updateModal" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel" aria-hidden="true">
+<!-- Modal 削除-->
+<div class="modal fade" id="updateModal" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog modal-custom" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -62,28 +95,29 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <form id="orderUpdateForm" action="" method="POST"> {% csrf_token %}                         
-            <div class="modal-body">
-                <table id="orderUpdateTable" class="table table-bordered bg-light"  width="100">
-                    <thead>
-                        <tr class="text-center">
-                            <th>ID</th>    
-                            <th>Supplier Delivery date</th>    
-                            <th>Customer Delivery date</th>
-                            <th>QTY</th>
-                            <th>Delete</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        
-                    </tbody>
-                </table>
-            </div>
-            <div class="modal-footer">
-                <button id="close" type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <!-- <button id="deleteOrder" type="button" class="btn btn-danger" data-dismiss="modal" >Delete</button> -->
-                <button id="updateConfirm" type="button" class="btn btn-primary" data-dismiss="modal" >Confirm</button>
-            </div>
+            <form id="orderUpdateForm" action="" method="POST"> {% csrf_token %}
+                <div class="modal-body">
+                    <table id="orderUpdateTable" class="table table-bordered bg-light" width="100">
+                        <thead>
+                            <tr class="text-center">
+                                <th>ID</th>
+                                <th>Supplier Delivery date</th>
+                                <th>Customer Delivery date</th>
+                                <th>QTY</th>
+                                <th>Delete</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button id="close" type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <!-- <button id="deleteOrder" type="button" class="btn btn-danger" data-dismiss="modal" >Delete</button> -->
+                    <button id="updateConfirm" type="button" class="btn btn-primary"
+                        data-dismiss="modal">Confirm</button>
+                </div>
             </form>
         </div>
     </div>
@@ -94,6 +128,3 @@
 
 
 {% endblock %}
-
-
-    
