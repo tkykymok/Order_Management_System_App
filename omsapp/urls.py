@@ -10,12 +10,17 @@ urlpatterns = [
     path('item-info-get/', views.ItemInfoGet.as_view(), name='item_info_get'),
     path('order-confirm-create/', views.OrderCreateConfirm.as_view(), name='order_create_confirm'),
     path('order-info/', views.OrderInfoView.as_view(), name='order_info'),
-    path('order-update/<str:id>/', views.OrderUpdate.as_view(), name='order_update'),
-    path('order-delete/', views.OrderDelete.as_view(), name='order_delete'),
+    path('order-update-info-get/', views.OrderUpdateInfo.as_view(), name='order_update_info_get'),
+    path('order-update-confirm/', views.OrderUpdateConfirm.as_view(), name='order_update_confirm'),
+    
+    path('order-delete-confirm/', views.OrderDeleteConfirm.as_view(), name='order_delete'),
     
     path('shipment-entry/', views.ShipmentEntryView.as_view(), name='shipment_entry'),
     path('shipment-data-get/', views.ShipmentDataGet.as_view(), name='shipment_data_get'),
     path('shipment-complete/', views.ShipmentComplete.as_view(), name='shipment_complete'),
+    
+    # path('order-info-sorting/', views.OrderInfoSorting.as_view(), name='order_info_sorting'),
+    
     
     
    

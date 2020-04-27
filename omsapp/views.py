@@ -6,7 +6,7 @@ from django.views.generic import (
     DetailView,
     UpdateView
 )
-from omsapp.models import Order, Item, OrderNumber, Order, Project, User, Shipping, Receiving
+from omsapp.models import Order, Item, OrderNumber, Order, Project, User, Shipment, Acceptance
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from django.urls import reverse_lazy
@@ -17,6 +17,11 @@ from .forms import OrderNumberForm, OrderForm
 from django.http import JsonResponse
 from django.forms.models import model_to_dict
 
+import pandas as pd
+from django_pandas.io import read_frame
+
+import json
+
 
 class MenuView(View,LoginRequiredMixin):
     def get(self, request):
@@ -25,11 +30,14 @@ class MenuView(View,LoginRequiredMixin):
     
 class OrderEntryView(View, LoginRequiredMixin):
     def get(self,request):
+        user = request.user
+        context = {'user':user}
         return render(request, 'omsapp/order_entry.html')
 
 class PrjCodeGet(View, LoginRequiredMixin):
     def post(self, request):
         prj_code_get = request.POST.getlist('prjCode', None)
+        print(prj_code_get)
         prj_code = Project.objects.get(prj_code = prj_code_get[0])
         customer_info = prj_code.customer_code
         person_incharge = request.user
@@ -51,11 +59,12 @@ class OrderNumberCreate(View, LoginRequiredMixin):
         
 class ItemInfoGet(View, LoginRequiredMixin):
     def post(self, request):
-        item_code = request.POST.getlist('item', None)
-        item_info = Item.objects.get(item_code=item_code[-1])
+        item_code = request.POST.get('item', None)
+        item_info = Item.objects.get(item_code=item_code)
         prj = item_info.prj_code.prj_code
-        print(prj)
+        # return JsonResponse({'result':True}, status=200)
         return JsonResponse({'item_info':model_to_dict(item_info),'prj':prj}, status=200)
+    
     
 class OrderCreateConfirm(View, LoginRequiredMixin):
     def post(self, request):
@@ -65,7 +74,7 @@ class OrderCreateConfirm(View, LoginRequiredMixin):
         qtys = request.POST.getlist('qty', None)
         suppDates = request.POST.getlist('suppDate', None)
         custDates = request.POST.getlist('custDate', None)
-        
+                
         for i in range(len(items)):
             if items[i] == "":
                 break
@@ -80,41 +89,299 @@ class OrderCreateConfirm(View, LoginRequiredMixin):
                 )
         return JsonResponse({'result':True}, status=200)
 
-class OrderInfoView(View, LoginRequiredMixin):
-    def get(self, request):
-        order_list = Order.objects.all()
-        context = {'order_list':order_list}
-        return render(request, 'omsapp/order_info.html', context)
-        
+class OrderUpdateInfo(View):
     def post(self, request):
-        # delete_check_val = request.POST.get('deleteCheck')
-        get_id = request.POST.get('formId', None)
-        new_supp_del_date = request.POST.get('suppDelDate', None)
-        new_cust_del_date = request.POST.get('custDelDate', None)
-        new_qty = request.POST.get('qty', None)
-                
-        new_order = Order.objects.get(id=get_id)
-        new_order.quantity = int(new_qty)
-        new_order.supplier_delivery_date = new_supp_del_date
-        new_order.customer_delivery_date = new_cust_del_date 
-        new_order.save()        
-            
-        return JsonResponse({'new_order':model_to_dict(new_order)}, status=200)  
-  
-class OrderDelete(View):
-    def get(self, request):
-        get_id = request.GET.get('id', None)
-        Order.objects.get(id=get_id).delete()
-        return JsonResponse({'deleted':True}, status=200)
-
-class OrderUpdate(View):
-    def get(self, request, id):
-        cur_order = Order.objects.get(id=id)
-        return JsonResponse({'cur_order':model_to_dict(cur_order)}, status=200)
+        input_order_number = request.POST.get('orderNumber', None)
+        order_number = OrderNumber.objects.get(order_number=input_order_number)
+        
+        rf_order = read_frame(Order.objects.filter(order_number=order_number).order_by('id'))
+        
+        rf_item = read_frame(Item.objects.all(),fieldnames=[
+            'item_code',
+            'parts_name', 
+            'parts_number', 
+            'sell_price',
+            'buy_price'
+        ])
+        
+        data1 = pd.merge(rf_order, rf_item, on='item_code', how='inner')
+        
+        data2 = data1.to_dict()
     
+        return JsonResponse({'order_list':data2}, status=200)
+    
+class OrderUpdateConfirm(View):
+    def post(self, request):
+        input_order_number = request.POST.get('orderNumber', None)
+        order_id = request.POST.getlist('orderId', None)
+        items = request.POST.getlist('item', None)
+        qtys = request.POST.getlist('qty', None)
+        suppDates = request.POST.getlist('suppDate', None)
+        custDates = request.POST.getlist('custDate', None)
+        
+        
+        for i in range(len(order_id)):
+            update_order = Order.objects.get(id=order_id[i])
+            if update_order.shipment_qty == 0 and update_order.acceptance_qty == 0:
+                print(update_order.shipment_qty)
+                update_order.supplier_delivery_date = suppDates[i]
+                update_order.customer_delivery_date = custDates[i]
+                update_order.quantity = int(qtys[i])
+                update_order.balance = int(qtys[i])
+                update_order.save()
+            else:
+                pass
+                
+        
+        return JsonResponse({'result':True}, status=200)
+        
+        
+
+        
+class OrderDeleteConfirm(View):
+    def post(self, request):
+        order_id = request.POST.getlist('orderId', None)
+        for i in range(len(order_id)):
+            Order.objects.get(id=order_id[i]).delete()
+    
+        return JsonResponse({'result':True}, status=200)
+
+
+
+class OrderInfoView(View, LoginRequiredMixin):
+    def get(self, request):   
+        input_prj_code = request.GET.get('prjCode', None)
+        input_order_number = request.GET.get('orderNum', None)
+        input_order_date_s = request.GET.get('orderDateS', None)
+        input_order_date_e = request.GET.get('orderDateE', None)    
+    
+       
+        rf_order = read_frame(Order.objects.all().order_by('id'))
+     
+        rf_item = read_frame(Item.objects.all(),fieldnames=[
+            'item_code',
+            'prj_code', 
+            'customer', 
+            'supplier', 
+            'parts_name', 
+            'parts_number', 
+            'sell_price','buy_price'
+        ])
+        
+        data1 = pd.merge(rf_order, rf_item, on='item_code', how='inner')
+        
+        rf_order_number = read_frame(OrderNumber.objects.all(), fieldnames=[
+            'order_number',
+            'user',
+            'date_created'
+        ])
+        
+        data2 = pd.merge(
+            data1.sort_values('id'), 
+            rf_order_number, 
+            on='order_number', 
+            how='inner'
+            )
+        print(data2)
+
+        # 1. prj_code only
+        if input_prj_code != "" and input_order_number == "" and input_order_date_s == "" and input_order_date_e == "":
+            order_list = data2[data2['prj_code']==input_prj_code]
+            context = {
+                'order_list':order_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'order_date_s':input_order_date_s,
+                'order_date_e':input_order_date_e}
+            print('1')
+            print(type(order_list.values) )
+            return render(request, 'omsapp/order_info.html',context)
+            
+        # 2. Order_No. only
+        elif input_prj_code == "" and input_order_number != "" and input_order_date_s == "" and input_order_date_e == "":
+            order_list = data2[data2['order_number']==input_order_number]
+            context = {
+                'order_list':order_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'order_date_s':input_order_date_s,
+                'order_date_e':input_order_date_e}
+            print('2')
+            return render(request, 'omsapp/order_info.html',context)
+            
+        # 3. order_date_s only
+        elif input_prj_code == "" and input_order_number == "" and input_order_date_s != "" and input_order_date_e == "":
+            order_date_s = pd.to_datetime(input_order_date_s).floor('D')
+            order_list = data2[data2['date_created']>=order_date_s]         
+            context = {
+                'order_list':order_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'order_date_s':input_order_date_s,
+                'order_date_e':input_order_date_e}
+            print('3')
+            return render(request, 'omsapp/order_info.html',context)
+            
+        # 4. order_date_e only
+        elif input_prj_code == "" and input_order_number == "" and input_order_date_s == "" and input_order_date_e != "":
+            order_list = data2[data2['date_created']<=order_date_e]
+            context = {
+                'order_list':order_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'order_date_s':input_order_date_s,
+                'order_date_e':input_order_date_e}
+            print('4')
+            return render(request, 'omsapp/order_info.html',context) 
+            
+        # 5. order_date_s and order_date_e
+        elif input_prj_code == "" and input_order_number == "" and input_order_date_s != "" and input_order_date_e != "":
+            order_date_s = pd.to_datetime(input_order_date_s).floor('D')
+            order_date_e = pd.to_datetime(input_order_date_e).floor('D')
+            data3 = data2[data2['date_created']>=order_date_s]
+            order_list = data3[data3['date_created']<=order_date_e]
+            context = {
+                'order_list':order_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'order_date_s':input_order_date_s,
+                'order_date_e':input_order_date_e}
+            print('5')
+            return render(request, 'omsapp/order_info.html',context)
+        
+        # 6. prj_code and Order_No
+        elif input_prj_code != "" and input_order_number != "" and input_order_date_s == "" and input_order_date_e == "":
+            data3 = data2[data2['prj_code']==input_prj_code]
+            order_list = data3[data3['order_number']==input_order_number]
+            context = {
+                'order_list':order_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'order_date_s':input_order_date_s,
+                'order_date_e':input_order_date_e}      
+            print('6')      
+            return render(request, 'omsapp/order_info.html',context)
+        
+        # 7. prj_code and order_date_s
+        elif input_prj_code != "" and input_order_number == "" and input_order_date_s != "" and input_order_date_e == "":
+            order_date_s = pd.to_datetime(input_order_date_s).floor('D')
+            data3 = data2[data2['prj_code']==input_prj_code]
+            order_list = data3[data3['date_created']>=order_date_s]
+            context = {
+                'order_list':order_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'order_date_s':input_order_date_s,
+                'order_date_e':input_order_date_e}
+            print('7')
+            return render(request, 'omsapp/order_info.html',context)
+            
+        # 8. prj_code and order_date_s and order_date_e
+        elif input_prj_code != "" and input_order_number == "" and input_order_date_s != "" and input_order_date_e != "":
+            order_date_s = pd.to_datetime(input_order_date_s).floor('D')
+            order_date_e = pd.to_datetime(input_order_date_e).floor('D')
+            data3 = data2[data2['prj_code']==input_prj_code]
+            data4 = data3[data3['date_created']>=order_date_s]
+            order_list = data4[data4['date_created']<=order_date_e]
+            context = {
+                'order_list':order_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'order_date_s':input_order_date_s,
+                'order_date_e':input_order_date_e}
+            print('8')
+            return render(request, 'omsapp/order_info.html',context)
+        
+        # 9. Order_No and order_date_s
+        elif input_prj_code == "" and input_order_number != "" and input_order_date_s != "" and input_order_date_e == "":
+            order_date_s = pd.to_datetime(input_order_date_s).floor('D')
+            data3 = data2[data2['order_number']==input_order_number]
+            order_list = data3[data3['date_created']>=order_date_s]
+            context = {
+                'order_list':order_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'order_date_s':input_order_date_s,
+                'order_date_e':input_order_date_e}
+            print('9')
+            return render(request, 'omsapp/order_info.html',context)
+        
+        # 10. Order_No and order_date_s and order_date_e
+        elif input_prj_code == "" and input_order_number != "" and input_order_date_s != "" and input_order_date_e != "":
+            order_date_s = pd.to_datetime(input_order_date_s).floor('D')
+            order_date_e = pd.to_datetime(input_order_date_e).floor('D')
+            data3 = data2[data2['order_number']==input_order_number]
+            data4 = data3[data3['date_created']>=order_date_s]
+            order_list = data4[data4['date_created']<=order_date_e]
+            context = {
+                'order_list':order_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'order_date_s':input_order_date_s,
+                'order_date_e':input_order_date_e}
+            print('10')
+            return render(request, 'omsapp/order_info.html',context)
+        
+        # 11. No input
+        elif input_prj_code == "" and input_order_number == "" and input_order_date_s == "" and input_order_date_e == "":
+            order_list = data2 
+            context = {
+                'order_list':order_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'order_date_s':input_order_date_s,
+                'order_date_e':input_order_date_e}
+            print('11')
+            return render(request, 'omsapp/order_info.html',context)
+        
+        # 13. default
+        elif input_prj_code is None and input_order_number is None and input_order_date_s is None and input_order_date_e is None:
+            print('13')
+            print(input_prj_code)
+            print(input_order_number)
+            print(input_order_date_s)
+            print(input_order_date_e)
+            
+            return render(request, 'omsapp/order_info.html')
+        
+        # 12. All Input 
+        else:
+            order_date_s = pd.to_datetime(input_order_date_s).floor('D')
+            order_date_e = pd.to_datetime(input_order_date_e).floor('D')
+            data3 = data2[data2['prj_code']==input_prj_code]
+            data4 = data3[data3['order_number']==input_order_number]
+            data5 = data4[data4['date_created']>=order_date_s]
+            order_list = data5[data5['date_created']<=order_date_e]
+            context = {
+                'order_list':order_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'order_date_s':input_order_date_s,
+                'order_date_e':input_order_date_e}
+            print('12')
+            return render(request, 'omsapp/order_info.html',context)
+            
+
+    # def post(self, request):
+    #     get_id = request.POST.get('formId', None)
+    #     new_supp_del_date = request.POST.get('suppDelDate', None)
+    #     new_cust_del_date = request.POST.get('custDelDate', None)
+    #     new_qty = request.POST.get('qty', None)
+                
+    #     new_order = Order.objects.get(id=get_id)
+    #     new_order.quantity = int(new_qty)
+    #     new_order.supplier_delivery_date = new_supp_del_date
+    #     new_order.customer_delivery_date = new_cust_del_date 
+    #     new_order.save()        
+            
+    #     return JsonResponse({'new_order':model_to_dict(new_order)}, status=200)  
+
+
 class ShipmentEntryView(View):
     def get(self, request):
-        return render(request, 'omsapp/shipment_entry.html')
+        user = request.user
+        context = {'user':user}
+        return render(request, 'omsapp/shipment_entry.html', context)
     
 class ShipmentDataGet(View):
     def get(self, request):
@@ -146,7 +413,6 @@ class ShipmentDataGet(View):
 class ShipmentComplete(View):
     def post(self, request):
         input_order_number = request.POST.get('orderNumber', None)
-        
         order_id = request.POST.getlist('orderId', None)
         item_code_list = request.POST.getlist('shipItem', None)
         ship_date_list = request.POST.getlist('shipDate2', None)
@@ -156,75 +422,23 @@ class ShipmentComplete(View):
             if ship_qty_list[i] == "":
                 break
             else:      
-                Shipping.objects.create(
+                Shipment.objects.create(
+                    user = request.user,
                     order_number = OrderNumber.objects.get(order_number=input_order_number),
                     item_code = Item.objects.get(item_code=item_code_list[i]),
                     shipped_date = ship_date_list[i],
-                    shipping_qty = int(ship_qty_list[i]),
+                    shipment_qty = int(ship_qty_list[i]),
                 )
-        
                 
         for i in range(len(order_id)):
             order_data = Order.objects.get(id=int(order_id[i]))
             if ship_qty_list[i] == '':
                 pass
             else:
-                order_data.shipping_qty += int(ship_qty_list[i])
-                order_data.balance -= int(ship_qty_list[i])
-                
+                order_data.shipment_qty += int(ship_qty_list[i])
+                # order_data.balance -= int(ship_qty_list[i])
                 order_data.save()
         
         return JsonResponse({'result':True}, status=200)
-        
-    
-    
- 
 
-# [
-#     {'id': 27, 'order_number': 32, 'item_code': 1, 'quantity': 1000, 'supplier_delivery_date': datetime.date(2020, 5, 20), 'customer_delivery_date': datetime.date(2020, 5, 20), 'shipping': 0, 'receiving': 0, 'balance': 0},
-    
-#     {'id': 28, 'order_number': 32, 'item_code': 2, 'quantity': 2000, 'supplier_delivery_date': datetime.date(2020, 5, 20), 'customer_delivery_date': datetime.date(2020, 5, 20), 'shipping': 0, 'receiving': 0, 'balance': 0}, 
-    
-#     {'id': 29, 'order_number': 32, 'item_code': 3, 'quantity': 3000, 'supplier_delivery_date': datetime.date(2020, 5, 20), 'customer_delivery_date': datetime.date(2020, 5, 20), 'shipping': 0, 'receiving': 0, 'balance': 0}
-# ]
 
-    
-    
-# class OrderUpdateView(UpdateView):
-#     model = Order
-#     form_class = OrderForm
-    
-#     template_name = 'omsapp/order_update.html'
-#     success_url = reverse_lazy('success')
-    
-#     def form_valid(self, form):
-#         result = super().form_valid(form)
-#         return result
-
-# class SuccessView(TemplateView):
-#     template_name = "omsapp/success.html"
-    
-# class OrderDetailView(DetailView):
-#     model = Order
-#     template_name = "omsapp/order_detail.html"
-    
-# class OrderListView(ListView, LoginRequiredMixin):
-#     model = Order
-#     template_name = 'omsapp/order_list.html'
-#     context_object_name = 'orders'
-#     ordering = ['order_number']
-    
-
-# class OrderInline(InlineFormSetFactory):
-#     model = Order
-#     fields = '__all__'
-#     factory_kwargs = {'extra': 10}
-    
-
-# class OrderCreateView(CreateWithInlinesView):
-#     model = OrderNumber
-#     fields = ['order_number']
-#     context_object_name = 'order_number'
-#     inlines = [OrderInline]
-#     template_name = 'omsapp/order_entry.html'
-#     success_url = reverse_lazy('success')

@@ -3,119 +3,80 @@
 
 {% block content %}
 
-<div class="container">
+<div class="container-fruid px-5">
     <div class="ml-2 mt-3 mb-3"><h2>Order Entry</h2></div>
-        <div class="row mb-2 bg-light" >
+    <div class="row mb-2 bg-light">
+            <div id="check-box" class="col-3">
+                <ul>
+                    <li><label for="chkbox1">New</label><input id="chkbox1" name="chkbox" type="checkbox" class="check-box"  value="1" checked="checked" ></li>
+                    <li><label for="chkbox2">Change</label><input id="chkbox2" name="chkbox" type="checkbox"  class="check-box" value="2"></li>
+                    <li><label for="chkbox3" >Delete</label><input id="chkbox3" name="chkbox" type="checkbox"  class="check-box" value="3"></li>
+                    <li><label for="pic" >PIC</label><input id="pic" type="text" name="pic" placeholder="" maxlength="4" readonly=True value="{{user}}"/></li>
+                </ul>
+            </div>
+            
             <form id="createOrderNumber" class="entry-form" method="post"> {% csrf_token %}
                 <table class="table table-borderless bg-light"  width="100">
                     <tr>
-                        <th class="text1" >Order No </th>
+                        <th class="text1">Order No </th>
                         <th class="test1">PRJ Code</th>
                         <th class="text1">Customer</th>
-                        <th class="text1">PIC</th>
+                        <th class="text1">Supplier Delivery date</th>    
+                        <th class="text1">Customer Delivery date</th>
+                        <th class="text1" width="10%"></th>
                     </tr>
                     <tr>
                         <td><input id="orderNumber" class="form-control" type="text" name="orderNumber" placeholder="" maxlength="8"/></td>
                         <td><input id="prjCode" class="form-control" type="text" name="prjCode" placeholder="" maxlength="4" /></td>
                         <td><input id='customer' class="form-control" type="text" name="customer" placeholder="" readonly=True /></td>
-                        <td><input id="pic" class="form-control" type="text" name="pic" placeholder="" maxlength="4" readonly=True/></td>
-                    </tr>
-                    <tr>
-                        <th>Supplier Delivery date</th>    
-                        <th>Customer Delivery date</th>
-                        <th></th>
-                        
-                    </tr>
-                    <tr>
                         <td><input id="suppDate" class="form-control" type="text" name="suppDelDate" placeholder="yyyymmdd" /></td>
                         <td><input id="custDate" class="form-control" type="text" name="custDelDate" placeholder="yyyymmdd" /></td>
-                        <td><button id="enter1" type="button" class="btn btn-outline-dark btn-block " >Enter</button></td>
+                        <td><button id="enter1" type="button" class="btn btn-outline-dark btn-block " >Enter</button></td>                
                     </tr>
                 </table>
             </form>
         </div>
 
         <div class="row" >
-                <table class="table table-bordered bg-light"  width="100">
-                    <tr class="text-center">
-                        <th>Item Code</th>
-                        <th>Supplier Delivery date</th>
-                        <th>Customer Delivery date</th>
-                        <th>Parts Name</th>
-                        <th>Parts Number</th>
-                        <th>S/P</th>
-                        <th>B/P</th>
-                        <th>QTY</th>
-                    </tr>
+            <form id="orderContentForm" action="" method="POST" width="100%"> {% csrf_token %}
+                <table id="orderCreateTable" class="table table-bordered bg-light"  width="100">
+                    <thead>
+                        <tr class="text-center">
+                            <th colspan="2">Item Code</th>
+                            <th width="13%">Supplier Delivery date</th>
+                            <th width="13%">Customer Delivery date</th>
+                            <th width="15%">Description</th>
+                            <th width="20%">Maker P/N</th>
+                            <th>S/P</th>
+                            <th>B/P</th>
+                            <th>QTY</th>
+                        </tr>
+                    </thead>
+                        <input id="orderNumCopy" type="hidden" name="orderNumber">
+                        <input id="prjCodeCopy" type="hidden" name="prjCode" placeholder="" maxlength="4">
+                    <tbody>
 
-                    <form id="orderContentForm" action="" method="POST"> {% csrf_token %}
-                            <input id="orderNumCopy" type="hidden" name="orderNumber">
-                            <input id="prjCodeCopy" type="hidden" name="prjCode" placeholder="" maxlength="4">
-
-                        <tr>
-                            <td><input id="item1" class="form-control" type="text" name="item" maxlength="5" disabled=True></td>
-                            <td><input id="suppDate1" class="form-control" type="text" name="suppDate" maxlength="10" readonly=True></td>
-                            <td><input id="custDate1" class="form-control" type="text" name="custDate" maxlength="10" readonly=True></td>
-                            <td><input id="pName1" class="form-control form-control" type="text" readonly=True></td>
-                            <td><input id="pNo1" class="form-control" type="text" readonly=True></td>
-                            <td><input id="sp1" class="form-control" type="text" readonly=True></td>
-                            <td><input id="bp1" class="form-control" type="text" readonly=True></td>
-                            <td><input id="qty1" class="form-control"  type="text" name="qty" disabled=True></th>
-                        </tr>
-                            
-                        <tr>
-                            <td><input id="item2" class="form-control" type="text" name="item" maxlength="5" disabled=True></td>
-                            <td><input id="suppDate2" class="form-control" type="text" name="suppDate" maxlength="10" readonly=True></td>
-                            <td><input id="custDate2" class="form-control" type="text" name="custDate" maxlength="10" readonly=True></td>
-                            <td><input id="pName2" class="form-control" type="text" readonly=True></td>
-                            <td><input id="pNo2" class="form-control" type="text" readonly=True></td>
-                            <td><input id="sp2" class="form-control" type="text" readonly=True></td>
-                            <td><input id="bp2" class="form-control" type="text" readonly=True></td>
-                            <td><input id="qty2" class="form-control" type="text" name="qty" disabled=True></th>
-                        </tr>
-                                
-                        <tr>
-                            <td><input id="item3" class="form-control" type="text" name="item" maxlength="5" disabled=True></td>
-                            <td><input id="suppDate3" class="form-control" type="text" name="suppDate" maxlength="10" readonly=True></td>
-                            <td><input id="custDate3" class="form-control" type="text" name="custDate" maxlength="10" readonly=True></td>
-                            <td><input id="pName3" class="form-control" type="text" readonly=True></td>
-                            <td><input id="pNo3" class="form-control" type="text" readonly=True></td>
-                            <td><input id="sp3" class="form-control" type="text" readonly=True></td>
-                            <td><input id="bp3" class="form-control" type="text" readonly=True></td>
-                            <td><input id="qty3" class="form-control" type="text" name="qty" disabled=True></th>
-                        </tr>
-                        <tr>
-                            <td><input id="item4" class="form-control" type="text" name="item" maxlength="5" disabled=True></td>
-                            <td><input id="suppDate4" class="form-control" type="text" name="suppDate" maxlength="10" readonly=True></td>
-                            <td><input id="custDate4" class="form-control" type="text" name="custDate" maxlength="10" readonly=True></td>
-                            <td><input id="pName4" class="form-control" type="text" readonly=True></td>
-                            <td><input id="pNo4" class="form-control" type="text" readonly=True></td>
-                            <td><input id="sp4" class="form-control" type="text" readonly=True></td>
-                            <td><input id="bp4" class="form-control" type="text" readonly=True></td>
-                            <td><input id="qty4" class="form-control" type="text" name="qty" disabled=True></th>
-                        </tr>
-                        <tr>
-                            <td><input id="item5" class="form-control" type="text" name="item" maxlength="5" disabled=True></td>
-                            <td><input id="suppDate5" class="form-control" type="text" name="suppDate" maxlength="10" readonly=True></td>
-                            <td><input id="custDate5" class="form-control" type="text" name="custDate" maxlength="10" readonly=True></td>
-                            <td><input id="pName5" class="form-control" type="text" readonly=True></td>
-                            <td><input id="pNo5" class="form-control" type="text" readonly=True></td>
-                            <td><input id="sp5" class="form-control" type="text" readonly=True></td>
-                            <td><input id="bp5" class="form-control" type="text" readonly=True></td>
-                            <td><input id="qty5" class="form-control" type="text" name="qty" disabled=True></th>
-                        </tr>
-                    </form>
+                    </tbody>
                 </table>
-         
-                <div class="col bottom-btn">
-                    <div class="col-2 float-right ">
-                        <button id="confirm" type="button" class="btn btn-primary btn-block">Confirm</button>
-                        <!-- <button id="create" type="button" class="btn btn-primary btn-block" data-toggle="modal" data-target="#exampleModal">Order Create</button> -->
-                    </div>       
-                    <div class="col-2 float-right">
-                        <button id="cancel" type="button" class="btn btn-dark btn-block mr-3">Cnacel</button>
+            </form>
+                    <div class="col bottom-btn">
+                        <div class="col-1 float-right ">
+                            <button id="confirm" type="button" class="btn btn-primary btn-block ">Confirm</button>
+                            <!-- <button id="create" type="button" class="btn btn-primary btn-block" data-toggle="modal" data-target="#exampleModal">Order Create</button> -->
+                        </div>       
+                        <div class="col-1 float-right">
+                            <button id="cancel" type="button" class="btn btn-dark btn-block mr-3">Cnacel</button>
+                        </div>
+                        <div class="col-1 float-right">
+                            <button id="lineAdd" type="button" class="btn btn-success btn-block mr-3">LineAdd</button>
+                        </div>
+                        <div class="col-1 float-left">
+                            <button id="lineDelete" type="button" class="btn btn-danger btn-block mr-3">LineDelete</button>
+                        </div>
                     </div>
-                </div>
+        
+        
+         
             
                 <!-- Modal 削除-->
                <!-- <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -149,8 +110,8 @@
                     </div>
                     </div>
                 </div> -->
-         </div>
     </div>
+</div>
         
                         
 
