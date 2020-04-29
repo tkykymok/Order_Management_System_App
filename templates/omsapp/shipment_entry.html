@@ -5,60 +5,57 @@
 
 <div class="container-fruid px-5">
     <div class="ml-2 mt-3 mb-3"><h2>Shipment Entry</h2></div>
-        <div class="row mb-2 bg-light" >
-            <div id="check-box" class="col-3">
+        <div class="row mb-2" >
+      
+            <div class="col-8">
                 <ul>
                     <li><label for="chkbox1">New</label><input id="chkbox1" name="chkbox" type="checkbox" class="check-box"  value="1" checked="checked" ></li>
                     <li><label for="chkbox2">Change</label><input id="chkbox2" name="chkbox" type="checkbox"  class="check-box" value="2"></li>
                     <li><label for="chkbox3" >Delete</label><input id="chkbox3" name="chkbox" type="checkbox"  class="check-box" value="3"></li>
-                    <li><label for="pic" >PIC</label><input id="pic" type="text" name="pic" placeholder="" maxlength="4" readonly=True value="{{user}}"/></li>
+                    <li><label for="pic" >PIC</label><input id="pic" class="text-center" type="text" name="pic" placeholder="" maxlength="4" readonly=True value="{{user}}"/></li>
                 </ul>
+                <form id="" class="entry-form" method="post"> {% csrf_token %}
+                    <table class="table table-borderless bg-light"  width="100">
+                        <tr>
+                            <th width="20%" class="text1" >Order No </th>
+                            <th width="8%" class="text1" >ID</th>
+                            <th width="10%" class="text1">PRJ Code</th>
+                            <th width="30%" class="text1">Customer</th>
+                            <th width="22%" class="text1">Ship date</th>    
+                            <th width="10%"></th>
+                            
+                        </tr>
+                        <tr>
+                            <td><input id="shipOrderNumber" class="form-control" type="text" name="shipOrderNumber" placeholder="" maxlength="8"/></td>
+                            <td><input id="orderId" class="form-control" type="text" name="orderId" placeholder="" maxlength="8" readonly=True/></td>
+                            <td><input id="shipPrjCode" class="form-control" type="text" name="prjCode" placeholder="" maxlength="4" readonly=True/></td>
+                            <td><input id='shipCustomer' class="form-control" type="text" name="customer" placeholder="" readonly=True /></td>
+                            <td><input id="shipDate" class="form-control" type="text" name="shipDate" placeholder="yyyymmdd" /></td>
+                            <td><button id="enter2" type="button" class="btn btn-outline-dark btn-block " >Enter</button></td>
+                        </tr>
+                    </table>
+                </form>
             </div>
-
-            <form id="" class="entry-form" method="post"> {% csrf_token %}
-                <table class="table table-borderless bg-light"  width="100">
-                    <tr>
-                        <th class="text1" >Order No </th>
-                        <th class="test1">PRJ Code</th>
-                        <th class="text1">Customer</th>
-                        <th>Ship date</th>    
-                        <th width="10%"></th>
-                        
-                    </tr>
-                    <tr>
-                        <td><input id="shipOrderNumber" class="form-control" type="text" name="shipOrderNumber" placeholder="" maxlength="8"/></td>
-                        <td><input id="shipPrjCode" class="form-control" type="text" name="prjCode" placeholder="" maxlength="4" readonly=True/></td>
-                        <td><input id='shipCustomer' class="form-control" type="text" name="customer" placeholder="" readonly=True /></td>
-                        <td><input id="shipDate" class="form-control" type="text" name="shipDate" placeholder="yyyymmdd" /></td>
-                        <td><button id="enter2" type="button" class="btn btn-outline-dark btn-block " >Enter</button></td>
-                    </tr>
-                </table>
-            </form>
         </div>
-
-        <div class="row" >
+            
+            <div class="row" >
             <form id="shipmentEntryForm" class="entry-form" action="" method="POST"> {% csrf_token %}
                 <input id="orderNumCopy" class="" type="hidden" name="orderNumber">
                 <table id="shipmentEntryTable" class="table table-bordered bg-light"  width="100"> 
-                    <tr class="text-center">
-                        <th>Item Code</th>
-                        <th width="13%">Ship Date</th>
-                        <th width="15%">Description</th>
-                        <th width="20%">Maker P/N</th>
-                        <th>S/P</th>
-                        <th>PO Bal</th>
-                        <th>Ship Qty</th>
-                    </tr>
-                
-            
+                    <thead>
+
+                    </thead>
+                    <tbody>
+
+                    </tbody>
                 </table>
             </form>
                 <div class="col bottom-btn">
                     <div class="col-1 float-right ">
-                    <button id="shipConfirm" type="button" class="btn btn-primary btn-block">Confirm</button>
+                    <button id="shipConfirm" type="button" class="btn btn-primary btn-block confirm-btn">Confirm</button>
                     </div>       
                     <div class="col-1 float-right">
-                        <button id="cancel" type="button" class="btn btn-dark btn-block mr-3">Cnacel</button>
+                        <button id="cancel" type="button" class="btn btn-dark btn-block mr-3 cancel-btn">Cnacel</button>
                     </div>
                 </div>
          </div>

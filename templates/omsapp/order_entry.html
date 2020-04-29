@@ -5,52 +5,43 @@
 
 <div class="container-fruid px-5">
     <div class="ml-2 mt-3 mb-3"><h2>Order Entry</h2></div>
-    <div class="row mb-2 bg-light">
-            <div id="check-box" class="col-3">
+        <div class="row mb-2">
+            <div class="col-8">  
                 <ul>
                     <li><label for="chkbox1">New</label><input id="chkbox1" name="chkbox" type="checkbox" class="check-box"  value="1" checked="checked" ></li>
                     <li><label for="chkbox2">Change</label><input id="chkbox2" name="chkbox" type="checkbox"  class="check-box" value="2"></li>
                     <li><label for="chkbox3" >Delete</label><input id="chkbox3" name="chkbox" type="checkbox"  class="check-box" value="3"></li>
-                    <li><label for="pic" >PIC</label><input id="pic" type="text" name="pic" placeholder="" maxlength="4" readonly=True value="{{user}}"/></li>
+                    <li><label for="pic" >PIC</label><input id="pic" class="text-center" type="text" name="pic" placeholder="" maxlength="4" readonly=True value="{{user}}"/></li>
                 </ul>
+
+                <form id="createOrderNumber" class="entry-form" method="post"> {% csrf_token %}
+                    <table class="table table-borderless bg-light"  width="100">
+                        <tr>
+                            <th class="text1">Order No </th>
+                            <th class="test1">PRJ Code</th>
+                            <th class="text1">Customer</th>
+                            <th class="text1">Supplier Delivery date</th>    
+                            <th class="text1">Customer Delivery date</th>
+                            <th class="text1" width="10%"></th>
+                        </tr>
+                        <tr>
+                            <td><input id="orderNumber" class="form-control" type="text" name="orderNumber" placeholder="" maxlength="8"/></td>
+                            <td><input id="prjCode" class="form-control" type="text" name="prjCode" placeholder="" maxlength="4" /></td>
+                            <td><input id='customer' class="form-control" type="text" name="customer" placeholder="" readonly=True /></td>
+                            <td><input id="suppDate" class="form-control" type="text" name="suppDelDate" placeholder="yyyymmdd" /></td>
+                            <td><input id="custDate" class="form-control" type="text" name="custDelDate" placeholder="yyyymmdd" /></td>
+                            <td><button id="enter1" type="button" class="btn btn-outline-dark btn-block " >Enter</button></td>                
+                        </tr>
+                    </table>
+                </form>
             </div>
-            
-            <form id="createOrderNumber" class="entry-form" method="post"> {% csrf_token %}
-                <table class="table table-borderless bg-light"  width="100">
-                    <tr>
-                        <th class="text1">Order No </th>
-                        <th class="test1">PRJ Code</th>
-                        <th class="text1">Customer</th>
-                        <th class="text1">Supplier Delivery date</th>    
-                        <th class="text1">Customer Delivery date</th>
-                        <th class="text1" width="10%"></th>
-                    </tr>
-                    <tr>
-                        <td><input id="orderNumber" class="form-control" type="text" name="orderNumber" placeholder="" maxlength="8"/></td>
-                        <td><input id="prjCode" class="form-control" type="text" name="prjCode" placeholder="" maxlength="4" /></td>
-                        <td><input id='customer' class="form-control" type="text" name="customer" placeholder="" readonly=True /></td>
-                        <td><input id="suppDate" class="form-control" type="text" name="suppDelDate" placeholder="yyyymmdd" /></td>
-                        <td><input id="custDate" class="form-control" type="text" name="custDelDate" placeholder="yyyymmdd" /></td>
-                        <td><button id="enter1" type="button" class="btn btn-outline-dark btn-block " >Enter</button></td>                
-                    </tr>
-                </table>
-            </form>
         </div>
 
         <div class="row" >
             <form id="orderContentForm" action="" method="POST" width="100%"> {% csrf_token %}
                 <table id="orderCreateTable" class="table table-bordered bg-light"  width="100">
                     <thead>
-                        <tr class="text-center">
-                            <th colspan="2">Item Code</th>
-                            <th width="13%">Supplier Delivery date</th>
-                            <th width="13%">Customer Delivery date</th>
-                            <th width="15%">Description</th>
-                            <th width="20%">Maker P/N</th>
-                            <th>S/P</th>
-                            <th>B/P</th>
-                            <th>QTY</th>
-                        </tr>
+
                     </thead>
                         <input id="orderNumCopy" type="hidden" name="orderNumber">
                         <input id="prjCodeCopy" type="hidden" name="prjCode" placeholder="" maxlength="4">
@@ -61,17 +52,16 @@
             </form>
                     <div class="col bottom-btn">
                         <div class="col-1 float-right ">
-                            <button id="confirm" type="button" class="btn btn-primary btn-block ">Confirm</button>
-                            <!-- <button id="create" type="button" class="btn btn-primary btn-block" data-toggle="modal" data-target="#exampleModal">Order Create</button> -->
+                            <button id="confirm" type="button" class="btn btn-primary btn-block confirm-btn">Confirm</button>
                         </div>       
                         <div class="col-1 float-right">
-                            <button id="cancel" type="button" class="btn btn-dark btn-block mr-3">Cnacel</button>
-                        </div>
-                        <div class="col-1 float-right">
-                            <button id="lineAdd" type="button" class="btn btn-success btn-block mr-3">LineAdd</button>
+                            <button id="cancel" type="button" class="btn btn-dark btn-block mr-3 cancel-btn">Cnacel</button>
                         </div>
                         <div class="col-1 float-left">
                             <button id="lineDelete" type="button" class="btn btn-danger btn-block mr-3">LineDelete</button>
+                        </div>
+                        <div class="col-1 float-left">
+                            <button id="lineAdd" type="button" class="btn btn-success btn-block mr-3">LineAdd</button>
                         </div>
                     </div>
         

@@ -27,7 +27,7 @@ class MenuView(View,LoginRequiredMixin):
     def get(self, request):
         return render(request, 'omsapp/menu.html')
 
-    
+### Order ########################### 
 class OrderEntryView(View, LoginRequiredMixin):
     def get(self,request):
         user = request.user
@@ -89,7 +89,7 @@ class OrderCreateConfirm(View, LoginRequiredMixin):
                 )
         return JsonResponse({'result':True}, status=200)
 
-class OrderUpdateInfo(View):
+class OrderUpdateDataGet(View):
     def post(self, request):
         input_order_number = request.POST.get('orderNumber', None)
         order_number = OrderNumber.objects.get(order_number=input_order_number)
@@ -104,7 +104,7 @@ class OrderUpdateInfo(View):
             'buy_price'
         ])
         
-        data1 = pd.merge(rf_order, rf_item, on='item_code', how='inner')
+        data1 = pd.merge(rf_order, rf_item, on='item_code', how='left')
         
         data2 = data1.to_dict()
     
@@ -119,7 +119,6 @@ class OrderUpdateConfirm(View):
         suppDates = request.POST.getlist('suppDate', None)
         custDates = request.POST.getlist('custDate', None)
         
-        
         for i in range(len(order_id)):
             update_order = Order.objects.get(id=order_id[i])
             if update_order.shipment_qty == 0 and update_order.acceptance_qty == 0:
@@ -130,13 +129,10 @@ class OrderUpdateConfirm(View):
                 update_order.balance = int(qtys[i])
                 update_order.save()
             else:
+                return JsonResponse({'result':False}, status=200)
                 pass
                 
-        
         return JsonResponse({'result':True}, status=200)
-        
-        
-
         
 class OrderDeleteConfirm(View):
     def post(self, request):
@@ -147,7 +143,274 @@ class OrderDeleteConfirm(View):
         return JsonResponse({'result':True}, status=200)
 
 
+### Shipment ########################### 
+class ShipmentEntryView(View):
+    def get(self, request):
+        user = request.user
+        context = {'user':user}
+        return render(request, 'omsapp/shipment_entry.html', context)
+    
+class ShipmentDataGet(View):
+    def get(self, request):
+        input_order_number = request.GET.get('shipOrderNumber', None)
+        parent_order_number = OrderNumber.objects.get(order_number = input_order_number)
+        
+        rf_ship_order = read_frame(Order.objects.filter(order_number=parent_order_number).order_by('id'))
+        rf_item = read_frame(Item.objects.all(),fieldnames=[
+            'item_code',
+            'prj_code',
+            'customer',
+            'parts_name', 
+            'parts_number', 
+            'sell_price',
+            'buy_price'
+        ])
+        
+        data1 = pd.merge(rf_ship_order, rf_item, on='item_code', how='left')
+        print(data1)
+        
+        data2 = data1.to_dict()
+    
+        return JsonResponse({'ship_order_list':data2}, status=200)
 
+class ShipmentComplete(View):
+    def post(self, request):
+        order_id = request.POST.getlist('orderId', None)
+        item_code_list = request.POST.getlist('shipItem', None)
+        ship_date_list = request.POST.getlist('shipDate2', None)
+        ship_qty_list = request.POST.getlist('shipQty', None)
+        
+        for i in range(len(ship_qty_list)):
+            if ship_qty_list[i] == "":
+                break
+            else:      
+                Shipment.objects.create(
+                    user = request.user,
+                    order_number = Order.objects.get(id=order_id[i]),
+                    item_code = Item.objects.get(item_code=item_code_list[i]),
+                    shipped_date = ship_date_list[i],
+                    shipment_qty = int(ship_qty_list[i]),
+                )
+                
+        for i in range(len(order_id)):
+            order_data = Order.objects.get(id=int(order_id[i]))
+            if ship_qty_list[i] == '':
+                pass
+            else:
+                order_data.shipment_qty += int(ship_qty_list[i])
+                order_data.stock -= int(ship_qty_list[i])
+                order_data.save()
+        
+        return JsonResponse({'result':True}, status=200)
+    
+class ShipmentUpdateDataGet(View):
+    def get(self, request):
+        input_order_number = request.GET.get('shipOrderNumber', None)
+        input_id = request.GET.get('orderId', None)
+        order = Order.objects.get(id=input_id)
+        
+        print(input_id)
+        
+        rf_ship_order = read_frame(Shipment.objects.filter(order_number=order).order_by('id'))
+        print(rf_ship_order)
+        
+        rf_order = read_frame(Order.objects.filter(id=input_id),fieldnames=[
+            'id',
+            'order_number'
+        ])
+        print(rf_order)
+        
+        rf_item = read_frame(Item.objects.all(),fieldnames=[
+            'item_code',
+            'prj_code',
+            'customer',
+            'parts_name', 
+            'parts_number', 
+            'sell_price',
+            'buy_price'
+        ])
+  
+        data1 = pd.merge(rf_ship_order, rf_item, on='item_code', how='left')
+        data2 = pd.merge(data1, rf_order, on='order_number', how='inner')
+        
+        print(data2)
+        data3 = data2.to_dict()
+        return JsonResponse({'shipment_list':data3}, status=200)
+        # return JsonResponse({'shipment_list':'ok'}, status=200)
+    
+
+class ShipmentUpdateConfirm(View):
+    def post(self,request):
+        orderId_list = request.POST.getlist('orderId', None)
+        ship_date_list = request.POST.getlist('shipDate2', None)
+        shipId_list = request.POST.getlist('shipId', None)
+        qty_list = request.POST.getlist('shipQty', None)
+                
+        for i in range (len(shipId_list)):
+            parent_order = Order.objects.get(id=orderId_list[i])
+            data = Shipment.objects.get(id=shipId_list[i])
+            changed_ship_date = ship_date_list[i]
+            original_qty = data.shipment_qty
+            changed_qty = int(qty_list[i])
+            if original_qty == changed_qty:
+                pass
+            else:
+                data.shipped_date = changed_ship_date
+                data.shipment_qty = changed_qty
+                data.save()
+                parent_order.shipment_qty -= int(original_qty)
+                parent_order.shipment_qty += int(changed_qty)
+                parent_order.stock += int(original_qty)
+                parent_order.stock -= int(changed_qty)
+                parent_order.save()
+            
+        
+        return JsonResponse({'result':True}, status=200)
+        
+
+    
+
+
+### Acceptance ########################### 
+class AcceptanceEntryView(View):
+    def get(self, request):
+        user = request.user
+        context = {'user':user}
+        return render(request, 'omsapp/acceptance_entry.html', context)
+    
+class AcceptanceDataGet(View):
+    def get(self, request):
+        input_order_number = request.GET.get('acceptOrderNumber', None)
+        supplier_code = request.GET.get('supplier', None)
+        parent_order_number = OrderNumber.objects.get(order_number = input_order_number)
+        
+        rf_accept_order = read_frame(Order.objects.filter(order_number=parent_order_number).order_by('id'))
+        
+        rf_item = read_frame(Item.objects.all(),fieldnames=[
+            'item_code',
+            'prj_code',
+            'supplier',
+            'parts_name', 
+            'parts_number', 
+            'sell_price',
+            'buy_price'
+        ])
+        
+        data1 = pd.merge(rf_accept_order, rf_item, on='item_code', how='left')
+        
+        print(data1)
+        
+        data2 = data1.to_dict()
+    
+        return JsonResponse({'accept_order_list':data2}, status=200)
+      
+class AcceptanceComplete(View):
+    def post(self, request):
+        input_order_number = request.POST.get('orderNumber', None)
+        order_id = request.POST.getlist('orderId', None)
+        item_code_list = request.POST.getlist('acceptItem', None)
+        accept_date_list = request.POST.getlist('acceptDate2', None)
+        accept_qty_list = request.POST.getlist('acceptQty', None)
+        
+        for i in range(len(accept_qty_list)):
+            if accept_qty_list[i] == "":
+                break
+            else:      
+                Acceptance.objects.create(
+                    user = request.user,
+                    order_number = Order.objects.get(id=order_id[i]),
+                    item_code = Item.objects.get(item_code=item_code_list[i]),
+                    accepted_date = accept_date_list[i],
+                    acceptance_qty = int(accept_qty_list[i]),
+                )
+                
+        for i in range(len(order_id)):
+            order_data = Order.objects.get(id=int(order_id[i]))
+            if accept_qty_list[i] == '':
+                pass
+            else:
+                order_data.acceptance_qty += int(accept_qty_list[i])
+                order_data.stock += int(accept_qty_list[i])
+                order_data.balance -= int(accept_qty_list[i])
+                order_data.save()
+        
+        return JsonResponse({'result':True}, status=200)
+    
+
+class AcceptanceUpdateDataGet(View):
+    def get(self, request):
+        input_order_number = request.GET.get('shipOrderNumber', None)
+        input_id = request.GET.get('orderId', None)
+        order = Order.objects.get(id=input_id)
+
+        rf_accept_order = read_frame(Acceptance.objects.filter(order_number=order).order_by('id'))
+        
+        rf_order = read_frame(Order.objects.filter(id=input_id),fieldnames=[
+            'id',
+            'order_number',
+            'balance'
+        ])
+        rf_item = read_frame(Item.objects.all(),fieldnames=[
+            'item_code',
+            'prj_code',
+            'supplier',
+            'parts_name', 
+            'parts_number', 
+            'sell_price',
+            'buy_price'
+        ])
+  
+        data1 = pd.merge(rf_accept_order, rf_item, on='item_code', how='left')
+        data2 = pd.merge(data1, rf_order, on='order_number', how='inner')
+        print(data2)
+        data3 = data2.to_dict()
+        print(data3)
+        return JsonResponse({'acceptance_list':data3}, status=200)
+   
+
+class AcceptanceUpdateConfirm(View):
+    def post(self,request):
+        orderId_list = request.POST.getlist('orderId', None)
+        accept_date_list = request.POST.getlist('acceptDate2', None)
+        acceptId_list = request.POST.getlist('acceptId', None)
+        qty_list = request.POST.getlist('acceptQty', None)
+                
+        for i in range (len(acceptId_list)):
+            parent_order = Order.objects.get(id=orderId_list[i])
+            data = Acceptance.objects.get(id=acceptId_list[i])
+            changed_accept_date = accept_date_list[i]
+            original_qty = data.acceptance_qty
+            changed_qty = int(qty_list[i])
+            if original_qty == changed_qty:
+                pass
+            else:
+                data.accepted_date = changed_accept_date
+                data.acceptance_qty = changed_qty
+                data.save()
+                parent_order.acceptance_qty -= int(original_qty)
+                parent_order.acceptance_qty += int(changed_qty)
+                parent_order.stock -= int(original_qty)
+                parent_order.stock += int(changed_qty)
+                parent_order.balance += int(original_qty)
+                parent_order.balance -= int(changed_qty)
+                parent_order.save()
+
+        return JsonResponse({'result':True}, status=200)
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+### Order Info ########################### 
 class OrderInfoView(View, LoginRequiredMixin):
     def get(self, request):   
         input_prj_code = request.GET.get('prjCode', None)
@@ -361,84 +624,3 @@ class OrderInfoView(View, LoginRequiredMixin):
             print('12')
             return render(request, 'omsapp/order_info.html',context)
             
-
-    # def post(self, request):
-    #     get_id = request.POST.get('formId', None)
-    #     new_supp_del_date = request.POST.get('suppDelDate', None)
-    #     new_cust_del_date = request.POST.get('custDelDate', None)
-    #     new_qty = request.POST.get('qty', None)
-                
-    #     new_order = Order.objects.get(id=get_id)
-    #     new_order.quantity = int(new_qty)
-    #     new_order.supplier_delivery_date = new_supp_del_date
-    #     new_order.customer_delivery_date = new_cust_del_date 
-    #     new_order.save()        
-            
-    #     return JsonResponse({'new_order':model_to_dict(new_order)}, status=200)  
-
-
-class ShipmentEntryView(View):
-    def get(self, request):
-        user = request.user
-        context = {'user':user}
-        return render(request, 'omsapp/shipment_entry.html', context)
-    
-class ShipmentDataGet(View):
-    def get(self, request):
-        input_order_number = request.GET.get('shipOrderNumber', None)
-        parent_order_number = OrderNumber.objects.get(order_number = input_order_number)
-        order_set = Order.objects.filter(order_number=parent_order_number)
-        pic = request.user
-        order_data = []
-        item_codes = []
-        item_data = []
-        
-        for i in order_set:
-            order_data.append(model_to_dict(i))
-            item_codes.append(i.item_code)
-        for i in item_codes:
-            item_data.append(model_to_dict(i))
-        
-        prj_code = item_codes[0].prj_code
-        customer = item_codes[0].prj_code.customer_code
-        
-        return JsonResponse({
-            'order_data':order_data,
-            'item_data':item_data,
-            'pic':model_to_dict(pic),
-            'prj_code':model_to_dict(prj_code),
-            'customer':model_to_dict(customer)
-            }, status=200)
-
-class ShipmentComplete(View):
-    def post(self, request):
-        input_order_number = request.POST.get('orderNumber', None)
-        order_id = request.POST.getlist('orderId', None)
-        item_code_list = request.POST.getlist('shipItem', None)
-        ship_date_list = request.POST.getlist('shipDate2', None)
-        ship_qty_list = request.POST.getlist('shipQty', None)
-        
-        for i in range(len(ship_qty_list)):
-            if ship_qty_list[i] == "":
-                break
-            else:      
-                Shipment.objects.create(
-                    user = request.user,
-                    order_number = OrderNumber.objects.get(order_number=input_order_number),
-                    item_code = Item.objects.get(item_code=item_code_list[i]),
-                    shipped_date = ship_date_list[i],
-                    shipment_qty = int(ship_qty_list[i]),
-                )
-                
-        for i in range(len(order_id)):
-            order_data = Order.objects.get(id=int(order_id[i]))
-            if ship_qty_list[i] == '':
-                pass
-            else:
-                order_data.shipment_qty += int(ship_qty_list[i])
-                # order_data.balance -= int(ship_qty_list[i])
-                order_data.save()
-        
-        return JsonResponse({'result':True}, status=200)
-
-
