@@ -174,13 +174,14 @@ class Order(models.Model):
     shipment_qty = models.IntegerField(default=0)
     acceptance_qty = models.IntegerField(default=0)
     balance = models.IntegerField(default=0)
+    stock = models.IntegerField(default=0)
     
     def __str__(self):
         return str(self.order_number)
 
 class Shipment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    order_number = models.ForeignKey(OrderNumber, on_delete=models.CASCADE)
+    order_number = models.ForeignKey(Order, on_delete=models.CASCADE)
     item_code = models.ForeignKey(Item, on_delete=models.CASCADE)
     shipment_qty = models.IntegerField(default=0)
     shipped_date = models.DateField(default=datetime.today)
@@ -189,7 +190,7 @@ class Shipment(models.Model):
 
 class Acceptance(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    order_number = models.ForeignKey(OrderNumber, on_delete=models.CASCADE)
+    order_number = models.ForeignKey(Order, on_delete=models.CASCADE)
     item_code = models.ForeignKey(Item, on_delete=models.CASCADE)
     acceptance_qty = models.IntegerField(default=0)
     accepted_date = models.DateField(default=datetime.today)

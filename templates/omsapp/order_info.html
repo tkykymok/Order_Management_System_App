@@ -36,7 +36,7 @@
             <table id="orderListTable" class="table table-sm bg-light table-bordered table-striped">
                 <tr>
                     <th>PRJ Code</th>
-                    <th>Order No</th>
+                    <th colspan="2">Order No</th>
                     <th>Order Date</th>
                     <th>Customer</th>
                     <th>Item Code</th>
@@ -44,10 +44,11 @@
                     <th>Maker P/N</th>
                     <th>B/P</th>
                     <th>S/P</th>
-                    <th>Qty</th>
+                    <th>Ordered</th>
                     <th>Shipped</th>
-                    <th>Received</th>
-                    <th>Balance</th>
+                    <th>Accepted</th>
+                    <th>Stock</th>
+                    <th>PO Bal</th>
                     <th>Supp Del Date</th>
                     <th>Cust Del Date</th>
                     <th>Supplier</th>
@@ -59,16 +60,18 @@
                 <tr>
                     <td>{{ row.prj_code }}</td>
                     <td>{{ row.order_number }}</td>
+                    <td>{{ row.id }}</td>
                     <td>{{ row.date_created | date:"Y-m-d"}}</td>
                     <td>{{ row.customer }}</td>
                     <td>{{ row.item_code }}</td>
                     <td>{{ row.parts_name }}</td>
                     <td>{{ row.parts_number }}</td>
-                    <td>{{ row.buy_price }}</td>
-                    <td>{{ row.sell_price }}</td>
+                    <td>¥{{ row.buy_price }}</td>
+                    <td>¥{{ row.sell_price }}</td>
                     <td id="qty-{{row.id}}">{{ row.quantity | intcomma }}</td>
                     <td>{{ row.shipment_qty | intcomma }}</td>
                     <td>{{ row.acceptance_qty | intcomma }}</td>
+                    <td>{{ row.stock | intcomma }}</td>
                     <td>{{ row.balance | intcomma }}</td>
                     <td id="suppDelDate-{{row.id}}">{{ row.supplier_delivery_date| date:"Y-m-d" }}</td>
                     <td id="custDelDate-{{row.id}}">{{ row.customer_delivery_date| date:"Y-m-d" }}</td>
