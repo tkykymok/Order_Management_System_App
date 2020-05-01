@@ -1,6 +1,22 @@
 // let csrfToken = $('input[name=csrfmiddlewaretoken]').val();
 $(document).ready(function () {
+
+// Common Function ////////////////////////////////////////////////////////////////////////////////////
     var csrfToken = $('input[name=csrfmiddlewaretoken]').val();
+    // date validation ---------------------
+    function dateValidation(date,next) {
+        if (date.val().length === 8) {
+            let year = date.val().slice(0, 4);
+            let month = date.val().slice(4, 6);
+            let day = date.val().slice(6, 8);
+            let validated = `${year}-${month}-${day}`;
+            date.val(validated);
+            next.focus();
+        }  else {
+            return false
+        }
+    };
+    //--------------------------------------
 
     let mode = "1"; // 1:new 2:change 3:delete
     console.log(mode);
@@ -14,11 +30,27 @@ $(document).ready(function () {
     function btnShowUp() {
         $('.confirm-btn').css('display','block')
         $('.cancel-btn').css('display','block')
+    }
+    
+    function btnShowUp2() {
         $('#lineAdd').css('display','block');
         $('#lineDelete').css('display','block');
     }
 
-    //"Check Box" ---------------------------
+    function deleteCheck() {
+        $('input[name="deleteCheck"]').on('click', function () {
+            let dataId = $(this).data('id')
+            if ($(this).val() === "0") {
+                $(this).val("1")
+                $(`#deleteCheckNum-${dataId}`).val("1")
+            } else {
+                $(this).val("0")
+                $(`#deleteCheckNum-${dataId}`).val("0")
+            }
+        });
+    }
+
+    //"Check Box" -------------------------
     $('#chkbox1').on('click', function () { 
         if ($('#chkbox2').prop('checked') === true || $('#chkbox3').prop('checked')===true ) {
             $('#chkbox2').prop('checked', false); 
@@ -69,7 +101,80 @@ $(document).ready(function () {
         console.log(mode);
     });
 
-    // Order ////////////////////////////////////////////////////////////////////////////////////
+    // "Item Info Get / Order Create" ------
+    function itemInfoGet(item, suppDate, custDate, pName, pNo, sp, bp, qty) {
+        let suppDelDate = $('#suppDate').val();
+        let custDelDate = $('#custDate').val(); 
+        $.ajax({
+            url: '/item-info-get/',
+            type: 'post',
+            data: {
+                csrfmiddlewaretoken: csrfToken,
+                'item': item,
+            },
+            dataType: 'json',
+            success: function (response) {
+                if ($('#prjCodeCopy').val() === response.prj) {
+                    $(`#${suppDate}`).val(suppDelDate).prop("readonly", false);
+                    $(`#${custDate}`).val(custDelDate).prop("readonly", false);
+                    $(`#${pName}`).val(response.item_info.parts_name).prop("disabled", true);
+                    $(`#${pNo}`).val(response.item_info.parts_number).prop("disabled", true);
+                    $(`#${sp}`).val(response.item_info.sell_price).prop("disabled", true);
+                    $(`#${bp}`).val(response.item_info.buy_price).prop("disabled", true);
+                    $(`#${qty}`).focus();
+                } else {
+                    alert(`Please input valid Item Code. This Item Code is registered as ${response.prj}`);
+                }
+            },
+            error: function () {
+                alert("Please input valid Item Code.");
+            }
+        });
+    };
+ 
+    
+    // new Line add ------------------------
+    function newLineAdd(n) {
+        for (let i = 0; i < 5; i++){
+            $("#orderCreateTable > tbody:last-child").append(`
+            <tr id="${n+i}" >
+                <td class="delete-check-box"><input id="deleteCheck-${i}" class="check-box" type="checkbox" name="deleteCheck" value="${i}" maxlength="5"></td>
+                <td><input id="item-${n+i}" class="form-control" type="text" name="item" data-id="${n+i}" maxlength="5"></td>
+                <td><input id="suppDate-${n+i}" class="form-control" type="text" name="suppDate" maxlength="10" readonly=True></td>
+                <td><input id="custDate-${n+i}" class="form-control" type="text" name="custDate" maxlength="10" readonly=True></td>
+                <td><input id="pName-${n+i}" class="form-control form-control" type="text" readonly=True></td>
+                <td><input id="pNo-${n+i}" class="form-control" type="text" readonly=True></td>
+                <td><input id="sp-${n+i}" class="form-control" type="text" readonly=True></td>
+                <td><input id="bp-${n+i}" class="form-control" type="text" readonly=True></td>
+                <td><input id="qty-${n+i}" class="form-control"  type="text" name="qty" data-id="${n+i}"></th>
+            </tr>
+            `);
+        }
+    }
+
+
+    // Line Delete --------------------------
+    $('#lineDelete').click(function () {
+        for (let i = 0; i < 50; i++) {
+            if ($(`#orderCreateTable tr#${i} input[name="deleteCheck"]`).prop('checked') === true) {
+                $(`#orderCreateTable tr#${i}`).remove()
+            }
+        }
+    });
+
+
+    // "Cancel and reload" -----------------
+    $('#cancel').click(function () {
+        if (!confirm('Are you sure you want to Cancel?')) {
+            return false;
+        } else {
+            location.reload(); 
+        }
+    });
+
+
+
+// Order ////////////////////////////////////////////////////////////////////////////////////
     //"inputOrderNumber" ---------------------------
     $('#orderNumber').keypress(function (event) {
         if (event.keyCode === 13) {
@@ -84,7 +189,7 @@ $(document).ready(function () {
     // Order Create ---------------------------
     $('#enter1').click(function () {
         if (mode === "1") {
-            modeChkBoxDiabled();
+
             let serializedData = $('#createOrderNumber').serialize();
             $.ajax({
                 url: '/order-number-create/',
@@ -94,6 +199,8 @@ $(document).ready(function () {
                 success: function (response) {
                     modeBlock();
                     btnShowUp();
+                    btnShowUp2();
+
                     let orderNumber = $('#orderNumber').val();
                     let prjCode = $('#prjCode').val();
                     let lineCount = 0;
@@ -234,7 +341,6 @@ $(document).ready(function () {
     // "Order update ---------------------------
     $('#enter1').click(function () {
         if (mode === "2") {
-            modeChkBoxDiabled();
             let serializedData = $('#createOrderNumber').serialize();
 
             $.ajax({
@@ -243,13 +349,9 @@ $(document).ready(function () {
                 data: serializedData,
                 dataType: 'json',
                 success: function (response) {
-                    modeBlock();
-                    btnShowUp();
                     let orderNumber = $('#orderNumber').val();
                     let prjCode = $('#prjCode').val();
-                    $('#orderNumCopy').val(orderNumber);
-                    $('#prjCodeCopy').val(prjCode);
-                    $('#enter1').hide();
+
 
                     console.log(response.order_list)
                     let data = response.order_list
@@ -260,9 +362,16 @@ $(document).ready(function () {
                         alert("This Order No does not exist.")
                         location.reload()
                     } else {
+                        modeBlock();
+                        btnShowUp();
+                        $('#orderNumber').prop("readonly", true);
+                        $('#orderNumCopy').val(orderNumber);
+                        $('#prjCodeCopy').val(prjCode);
+                        $('#enter1').hide();
+
                         $("#orderCreateTable > thead").prepend(`
                         <tr class="text-center">
-                            <th colspan="2">Item Code</th>
+                            <th>Item Code</th>
                             <th width="13%">Supplier Delivery date</th>
                             <th width="13%">Customer Delivery date</th>
                             <th width="15%">Description</th>
@@ -276,7 +385,6 @@ $(document).ready(function () {
                             $("#orderCreateTable > tbody:last-child").append(`
                             <tr id=${i}>
                                 <input id="order-${i}"  type="hidden" name="orderId"  maxlength="5">
-                                <td class="delete-check-box"><input id="deleteCheck-${i}" class="check-box" type="checkbox" name="deleteCheck" disabled=True maxlength="5"></td>
                                 <td><input id="item-${i}" class="form-control" type="text" name="item" maxlength="5" readonly=True></td>
                                 <td><input id="suppDate-${i}" class="form-control" type="text" name="suppDate" maxlength="10"></td>
                                 <td><input id="custDate-${i}" class="form-control" type="text" name="custDate" maxlength="10"></td>
@@ -284,7 +392,7 @@ $(document).ready(function () {
                                 <td><input id="pNo-${i}" class="form-control" type="text" readonly=True></td>
                                 <td><input id="sp-${i}" class="form-control" type="text" readonly=True></td>
                                 <td><input id="bp-${i}" class="form-control" type="text" readonly=True></td>
-                                <td><input id="qty-${i}" class="form-control"  type="text" name="qty" data-id="${i}"></th>
+                                <td><input id="qty-${i}" class="form-control"  type="text" name="qty" data-id="${i}" readonly=True></th>
                             </tr>
                             `);
                             $(`#order-${i}`).val(data.id[i]);
@@ -325,7 +433,6 @@ $(document).ready(function () {
                                                 location.reload();
                                             } else {
                                                 alert("This order cannot be changed");
-                                                location.reload();
                                             }
                                         },
                                         error: function () {
@@ -346,32 +453,30 @@ $(document).ready(function () {
     // "Order Delete ---------------------------
     $('#enter1').click(function () {
         if (mode === "3") {
-            modeChkBoxDiabled();
             let serializedData = $('#createOrderNumber').serialize();
 
             $.ajax({
-                url: '/order-update-info-get/',
+                url: '/order-update-data-get/',
                 type: 'post',
                 data: serializedData,
                 dataType: 'json',
                 success: function (response) {
-                    modeBlock();
-                    btnShowUp();
-                    let orderNumber = $('#orderNumber').val();
-                    let prjCode = $('#prjCode').val();
-                    $('#orderNumCopy').val(orderNumber);
-                    $('#prjCodeCopy').val(prjCode);
-                    $('#enter1').hide();
-
-                    console.log(response.order_list)
                     let data = response.order_list
                     let dataLength = Object.keys(response.order_list.id).length;
-                    console.log(dataLength);
+
 
                     if (dataLength === 0) {
                         alert("This Order No does not exist.")
                         location.reload()
                     } else {
+                        modeBlock();
+                        btnShowUp();
+                        let orderNumber = $('#orderNumber').val();
+                        let prjCode = $('#prjCode').val();
+                        $('#orderNumCopy').val(orderNumber);
+                        $('#prjCodeCopy').val(prjCode);
+                        $('#orderNumber').prop("readonly", true);
+                        $('#enter1').hide();
                         $("#orderCreateTable > thead").prepend(`
                         <tr class="text-center">
                             <th colspan="2">Item Code</th>
@@ -389,15 +494,16 @@ $(document).ready(function () {
                             $("#orderCreateTable > tbody:last-child").append(`
                             <tr id=${i}>
                                 <input id="order-${i}"  type="hidden" name="orderId"  maxlength="5">
-                                <td class="delete-check-box"><input id="deleteCheck-${i}" class="check-box" type="checkbox" name="deleteCheck" maxlength="5"></td>
+                                <input id="deleteCheckNum-${i}" type="hidden" name="deleteCheckNum" value="0">
+                                <td class="delete-check-box"><input id="deleteCheck-${i}" class="check-box" type="checkbox" data-id="${i}" name="deleteCheck" value="0"></td>
                                 <td><input id="item-${i}" class="form-control" type="text" name="item" maxlength="5" readonly=True></td>
-                                <td><input id="suppDate-${i}" class="form-control" type="text" name="suppDate" maxlength="10"></td>
-                                <td><input id="custDate-${i}" class="form-control" type="text" name="custDate" maxlength="10"></td>
+                                <td><input id="suppDate-${i}" class="form-control" type="text" name="suppDate" maxlength="10" readonly=True ></td>
+                                <td><input id="custDate-${i}" class="form-control" type="text" name="custDate" maxlength="10" readonly=True ></td>
                                 <td><input id="pName-${i}" class="form-control form-control" type="text" readonly=True></td>
                                 <td><input id="pNo-${i}" class="form-control" type="text" readonly=True></td>
                                 <td><input id="sp-${i}" class="form-control" type="text" readonly=True></td>
                                 <td><input id="bp-${i}" class="form-control" type="text" readonly=True></td>
-                                <td><input id="qty-${i}" class="form-control"  type="text" name="qty" data-id="${i}"></th>
+                                <td><input id="qty-${i}" class="form-control"  type="text" name="qty" data-id="${i}" readonly=True></th>
                             </tr>
                             `);
     
@@ -411,6 +517,7 @@ $(document).ready(function () {
                             $(`#bp-${i}`).val(data.buy_price[i]);
                             $(`#qty-${i}`).val(data.quantity[i]);
                         }
+                        deleteCheck();
                         $('#orderCreateTable').on('keypress', 'input[name="qty"]', function (event) {
                             if (event.keyCode === 13) {
                                 let dataId = $(this).data('id');
@@ -426,15 +533,7 @@ $(document).ready(function () {
                                 if (!confirm('Do you Delete Checked Order?')) {
                                     return false;
                                 } else {
-                                    let dataLength = $('#orderCreateTable > tbody').children().length;
-                                    // unchecked Line Delete --------------------------
-                                    for (let i = 0; i < dataLength; i++) {
-                                        if ($(`#orderCreateTable tr#${i} input[name="deleteCheck"]`).prop('checked') === false) {
-                                            $(`#orderCreateTable tr#${i}`).remove()
-                                        }
-                                    }
                                     let serializedData = $('#orderContentForm').serialize();
-                                    // -------------------------------------
                                     $.ajax({
                                         url: '/order-delete-confirm/',
                                         type: 'post',
@@ -460,79 +559,8 @@ $(document).ready(function () {
         }
     });
     
-    // "Item Info Get / Order Create" ----------------------
-    function itemInfoGet(item, suppDate, custDate, pName, pNo, sp, bp, qty) {
-        let suppDelDate = $('#suppDate').val();
-        let custDelDate = $('#custDate').val(); 
-        $.ajax({
-            url: '/item-info-get/',
-            type: 'post',
-            data: {
-                csrfmiddlewaretoken: csrfToken,
-                'item': item,
-            },
-            dataType: 'json',
-            success: function (response) {
-                if ($('#prjCodeCopy').val() === response.prj) {
-                    $(`#${suppDate}`).val(suppDelDate).prop("readonly", false);
-                    $(`#${custDate}`).val(custDelDate).prop("readonly", false);
-                    $(`#${pName}`).val(response.item_info.parts_name).prop("disabled", true);
-                    $(`#${pNo}`).val(response.item_info.parts_number).prop("disabled", true);
-                    $(`#${sp}`).val(response.item_info.sell_price).prop("disabled", true);
-                    $(`#${bp}`).val(response.item_info.buy_price).prop("disabled", true);
-                    $(`#${qty}`).focus();
-                } else {
-                    alert(`Please input valid Item Code. This Item Code is registered as ${response.prj}`);
-                }
-            },
-            error: function () {
-                alert("Please input valid Item Code.");
-            }
-        });
-    };
-    // -------------------------------------
-    
-    // new Line add ----------------------------
-    function newLineAdd(n) {
-        for (let i = 0; i < 5; i++){
-            $("#orderCreateTable > tbody:last-child").append(`
-            <tr id="${n+i}" >
-                <td class="delete-check-box"><input id="deleteCheck-${i}" class="check-box" type="checkbox" name="deleteCheck" value="${i}" maxlength="5"></td>
-                <td><input id="item-${n+i}" class="form-control" type="text" name="item" data-id="${n+i}" maxlength="5"></td>
-                <td><input id="suppDate-${n+i}" class="form-control" type="text" name="suppDate" maxlength="10" readonly=True></td>
-                <td><input id="custDate-${n+i}" class="form-control" type="text" name="custDate" maxlength="10" readonly=True></td>
-                <td><input id="pName-${n+i}" class="form-control form-control" type="text" readonly=True></td>
-                <td><input id="pNo-${n+i}" class="form-control" type="text" readonly=True></td>
-                <td><input id="sp-${n+i}" class="form-control" type="text" readonly=True></td>
-                <td><input id="bp-${n+i}" class="form-control" type="text" readonly=True></td>
-                <td><input id="qty-${n+i}" class="form-control"  type="text" name="qty" data-id="${n+i}"></th>
-            </tr>
-            `);
-        }
-    }
-    // -------------------------------------
 
-    // Line Delete --------------------------
-    $('#lineDelete').click(function () {
-        for (let i = 0; i < 50; i++) {
-            if ($(`#orderCreateTable tr#${i} input[name="deleteCheck"]`).prop('checked') === true) {
-                $(`#orderCreateTable tr#${i}`).remove()
-            }
-        }
-    });
-    // -------------------------------------
-
-
-    // "Cancel and reload" -----------------------
-    $('#cancel').click(function () {
-        if (!confirm('Are you sure you want to Cancel?')) {
-            return false;
-        } else {
-            location.reload(); 
-        }
-    });
-
-    // Shipment ////////////////////////////////////////////////////////////////////////////////////
+// Shipment ////////////////////////////////////////////////////////////////////////////////////
     $('#shipOrderNumber').keypress(function (event) {
         if (event.keyCode === 13) {
             if (mode === "1") {        
@@ -553,7 +581,7 @@ $(document).ready(function () {
         }
     });
     
-    // // Ship New ---------------------
+    // Shipment New ---------------------
     $('#enter2').click(function () {
         if (mode === "1") {
             let shipOrderNumber = $('#shipOrderNumber').val();
@@ -566,28 +594,13 @@ $(document).ready(function () {
                 },
                 dataType: 'json',
                 success: function (response) {
-                    modeBlock();
-                    btnShowUp();
-                    $('#enter2').hide();
-                    $('#shipDate').prop('readonly', true);
-                    $('#shipPrjCode').val(response.ship_order_list.prj_code[0]);
-                    $('#shipCustomer').val(response.ship_order_list.customer[0]);
+
                     let dataLength = Object.keys(response.ship_order_list.id).length;
                     let isStockExit = 0;
+
                     if (dataLength === 0) {
                         alert("Please input valid Order Number.");
                     } else {
-                        $("#shipmentEntryTable > thead").prepend(`
-                        <tr class="text-center">
-                            <th>Item Code</th>
-                            <th width="13%">Ship Date</th>
-                            <th width="15%">Description</th>
-                            <th width="20%">Maker P/N</th>
-                            <th>S/P</th>
-                            <th>Stock</th>
-                            <th>Ship Qty</th>
-                        </tr>
-                        `)
                         for (i = 0; i < dataLength; i++) {
                             if (response.ship_order_list.stock[i] === 0) {
                                 isStockExit += 1;
@@ -619,6 +632,25 @@ $(document).ready(function () {
                             location.reload();
                         } else {
                             $('#enter2').hide();
+                            modeBlock();
+                            btnShowUp();
+                            $('#enter2').hide();
+                            $('#shipOrderNumber').prop("readonly", true);
+                            $('#shipDate').prop('readonly', true);
+                            $('#shipPrjCode').val(response.ship_order_list.prj_code[0]);
+                            $('#shipCustomer').val(response.ship_order_list.customer[0]);
+                            
+                            $("#shipmentEntryTable > thead").prepend(`
+                            <tr class="text-center">
+                                <th>Item Code</th>
+                                <th width="13%">Ship Date</th>
+                                <th width="15%">Description</th>
+                                <th width="20%">Maker P/N</th>
+                                <th>S/P</th>
+                                <th>Stock</th>
+                                <th>Ship Qty</th>
+                            </tr>
+                            `)
                         }
     
                         $('input[name="shipQty"]').on('focus', function () {
@@ -651,7 +683,7 @@ $(document).ready(function () {
         }
     });
 
-    // Ship Update ---------------------
+    // Shipment Update ---------------------
     $('#enter2').click(function () {
         if (mode === "2") {
             let shipOrderNumber = $('#shipOrderNumber').val();
@@ -666,16 +698,21 @@ $(document).ready(function () {
                 },
                 dataType: 'json',
                 success: function (response) {
-                    modeBlock();
-                    btnShowUp();
-                    $('#enter2').hide();
-                    $('#shipPrjCode').val(response.shipment_list.prj_code[0]);
-                    $('#shipCustomer').val(response.shipment_list.customer[0]);
                     let dataLength = Object.keys(response.shipment_list.id_x).length;
-
-                    if (dataLength === 0) {
-                        alert("Please input valid Order Number.");
+                    if (response.shipment_list.order_number[0] != shipOrderNumber) {
+                        alert("Input Order No and ID does not match.");
+                    } else if (dataLength === 0) {
+                        alert("Please input valid Order ID.");
                     } else {
+                        modeBlock();
+                        btnShowUp();
+                        $('#enter2').hide();
+                        $('#shipOrderNumber').prop("readonly", true);
+                        $('#orderId').prop("readonly", true);
+    
+                        $('#shipPrjCode').val(response.shipment_list.prj_code[0]);
+                        $('#shipCustomer').val(response.shipment_list.customer[0]);
+                        
                         $("#shipmentEntryTable > thead").prepend(`
                         <tr class="text-center">
                             <th width="5%">ID</th>
@@ -738,20 +775,73 @@ $(document).ready(function () {
         }
     });
     
-    // Ship Delete ---------------------
+    // Shipment Delete ---------------------
     $('#enter2').click(function () {
         if (mode === "3") {
             let shipOrderNumber = $('#shipOrderNumber').val();
+            let orderId = $('#orderId').val();
+            $('#orderNumCopy').val(shipOrderNumber);
             $.ajax({
                 url: '/shipment-update-data-get/',
                 type: 'get',
                 data: {
-                    'shipOrderNumber': shipOrderNumber
+                    'shipOrderNumber': shipOrderNumber,
+                    'orderId': orderId
                 },
                 dataType: 'json',
                 success: function (response) {
-                    modeBlock();
-                    btnShowUp();
+                    let dataLength = Object.keys(response.shipment_list.id_x).length;
+                    if (dataLength === 0) {
+                        alert("Please input valid Order ID. Shipment Data Does not exist.");
+                    } else if (response.shipment_list.order_number[0] != shipOrderNumber) {
+                        alert("Input Order No and ID does not match.");
+                    } else {
+                        modeBlock();
+                        btnShowUp();
+                        $('#enter2').hide();
+                        $('#shipOrderNumber').prop("readonly", true);
+                        $('#orderId').prop("readonly", true);
+
+                        $('#shipPrjCode').val(response.shipment_list.prj_code[0]);
+                        $('#shipCustomer').val(response.shipment_list.customer[0]);
+                        
+                        $("#shipmentEntryTable > thead").prepend(`
+                        <tr class="text-center">
+                            <th colspan="2" width="5%">ID</th>
+                            <th>Item Code</th>
+                            <th width="13%">Ship Date</th>
+                            <th width="15%">Description</th>
+                            <th width="20%">Maker P/N</th>
+                            <th>S/P</th>
+                            <th>Ship Qty</th>
+                        </tr>
+                        `)
+                        for (i = 0; i < dataLength; i++) {
+                            $("#shipmentEntryTable > tbody:last-child").append(`  
+                            <tr id=${i}>
+                                <input id="orderId-${i}" class="form-control" type="hidden" name="orderId" readonly=True>
+                                <input id="deleteCheckNum-${i}" type="hidden" name="deleteCheckNum" value="0">
+                                <td class="delete-check-box"><input id="deleteCheck-${i}" class="check-box" type="checkbox" data-id="${i}" name="deleteCheck" value="0"></td>
+                                <td><input id="id-${i}" class="form-control" type="text" name="shipId" readonly=True></td>
+                                <td><input id="shipItem-${i}" class="form-control" type="text" name="shipItem" maxlength="5" readonly=True ></td>
+                                <td><input id="shipDate-${i}" class="form-control" type="text" name="shipDate2" maxlength="10" readonly=True></td>
+                                <td><input id="shipPName-${i}" class="form-control form-control" type="text" readonly=True></td>
+                                <td><input id="shipPNo-${i}" class="form-control" type="text" readonly=True></td>
+                                <td><input id="shipSp-${i}" class="form-control" type="text" readonly=True></td>
+                                <td><input id="shipQty-${i}" class="form-control"  type="text" name="shipQty" data-id="${i}" readonly=True></td>
+                            </tr>
+                            `)
+                            $(`#orderId-${i}`).val(response.shipment_list.id_y[i]);
+                            $(`#id-${i}`).val(response.shipment_list.id_x[i]);
+                            $(`#shipItem-${i}`).val(response.shipment_list.item_code[i]);
+                            $(`#shipDate-${i}`).val(response.shipment_list.shipped_date[i])
+                            $(`#shipPName-${i}`).val(response.shipment_list.parts_name[i]);
+                            $(`#shipPNo-${i}`).val(response.shipment_list.parts_number[i]);
+                            $(`#shipSp-${i}`).val(response.shipment_list.sell_price[i]);
+                            $(`#shipQty-${i}`).val(response.shipment_list.shipment_qty[i]);
+                        }
+                        deleteCheck();
+                    }
                 },
                 error: function () {
                     alert("Please input valid Order Number.");
@@ -760,9 +850,6 @@ $(document).ready(function () {
         }
     });
                         
-        
-
-    // -------------------------------------
 
     // Shipment Confirm --------------------
     $('#shipConfirm').click(function () {
@@ -798,7 +885,7 @@ $(document).ready(function () {
                     dataType: 'json',
                     success: function (response) {
                         if (response.result) {
-                            // location.reload();
+                            location.reload();
                         }
                     },
                     error: function () {
@@ -806,16 +893,32 @@ $(document).ready(function () {
                     }
                 });  
             }  
-
-            
-        } else if (mode === "3") {
-
+        } else if (mode === "3") {       
+            if (!confirm('Do you Delete Checked Line?')) {
+                return false;
+            } else {
+                let serializedData = $('#shipmentEntryForm').serialize();
+                $.ajax({
+                    url: '/shipment-delete-confirm/',
+                    type: 'post',
+                    data: serializedData,
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.result) {
+                            location.reload();
+                        }
+                    },
+                    error: function () {
+                        alert("error");
+                    }
+                });
+            }   
         }
     });
     // -------------------------------------
 
 
-    // Acceptance ////////////////////////////////////////////////////////////////////////////////////
+// Acceptance ////////////////////////////////////////////////////////////////////////////////////
     $('#acceptOrderNumber').keypress(function (event) {
         if (event.keyCode === 13) {
             if (mode === "1") {        
@@ -836,7 +939,7 @@ $(document).ready(function () {
         }
     });
 
-    // // Accept New ---------------------
+    // Acceptance New ---------------------
     $('#enter4').click(function () {
         if (mode === "1") {
             let acceptOrderNumber = $('#acceptOrderNumber').val();
@@ -851,27 +954,13 @@ $(document).ready(function () {
                 },
                 dataType: 'json',
                 success: function (response) {
-                    modeBlock();
-                    btnShowUp();
-                    $('#acceptPrjCode').val(response.accept_order_list.prj_code[0]);
                     let dataLength = Object.keys(response.accept_order_list.id).length;
                     let isBalExit = 0;
-
+                    $('#acceptPrjCode').val(response.accept_order_list.prj_code[0]);
+                    
                     if (dataLength === 0) {
                         alert("Please input valid Order Number.");
                     } else {
-                        $("#acceptanceEntryTable > thead").prepend(`
-                        <tr class="text-center">
-                            <th width="10%">Item Code</th>
-                            <th width="15%">Supplier</th>
-                            <th width="13%">Accept Date</th>
-                            <th width="15%">Description</th>
-                            <th width="20%">Maker P/N</th>
-                            <th>B/P</th>
-                            <th width="10%">PO Bal</th>
-                            <th width="10%">Accept Qty</th>
-                        </tr>
-                        `)
                         for (i = 0; i < dataLength; i++) {
                             if (response.accept_order_list.balance[i] === 0) {
                                 isBalExit += 1;
@@ -905,6 +994,23 @@ $(document).ready(function () {
                             alert("No remaining PO Balance Exit.")
                             location.reload();
                         } else {
+                            modeBlock();
+                            btnShowUp();
+                            $('#acceptOrderNumber').prop("readonly", true);
+                            $('#acceptDate').prop("readonly", true);
+
+                            $("#acceptanceEntryTable > thead").prepend(`
+                            <tr class="text-center">
+                                <th width="10%">Item Code</th>
+                                <th width="15%">Supplier</th>
+                                <th width="13%">Accept Date</th>
+                                <th width="15%">Description</th>
+                                <th width="20%">Maker P/N</th>
+                                <th>B/P</th>
+                                <th width="10%">PO Bal</th>
+                                <th width="10%">Accept Qty</th>
+                            </tr>
+                            `)
                             $('#enter4').hide();
                         }
 
@@ -952,24 +1058,28 @@ $(document).ready(function () {
                 },
                 dataType: 'json',
                 success: function (response) {
-                    modeBlock();
-                    btnShowUp();
-                    $('#enter4').hide();
                     let dataLength = Object.keys(response.acceptance_list.id_x).length;
-
-                    if (dataLength === 0) {
-                        alert("Please input valid Order Number.");
-                        location.reload();
+                    $('#acceptPrjCode').val(response.acceptance_list.prj_code[0]);
+                    if (response.acceptance_list.order_number[0] != acceptOrderNumber) {
+                        alert("Input Order No and ID does not match.");
+                    } else if (dataLength === 0) {
+                        alert("Please input valid Order ID.");
                     } else {
+                        modeBlock();
+                        btnShowUp();
+                        $('#enter4').hide();
+                        $('#acceptOrderNumber').prop("readonly", true);
+                        $('#orderId').prop("readonly", true);
+
                         $("#acceptanceEntryTable > thead").prepend(`
                         <tr class="text-center">
                             <th width="5%">ID</th>
                             <th width="10%">Item Code</th>
                             <th width="15%">Supplier</th>
-                            <th width="13%">Accept Date</th>
+                            <th width="15%">Accept Date</th>
                             <th width="15%">Description</th>
-                            <th width="20%">Maker P/N</th>
-                            <th>B/P</th>
+                            <th width="15%">Maker P/N</th>
+                            <th width="10%">B/P</th>
                             <th width="10%">Accept Qty</th>
                         </tr>
                         `)
@@ -983,7 +1093,7 @@ $(document).ready(function () {
                                 <td><input id="acceptDate-${i}" class="form-control" type="text" name="acceptDate2" maxlength="10"></td>
                                 <td><input id="acceptPName-${i}" class="form-control form-control" type="text" readonly=True></td>
                                 <td><input id="acceptPNo-${i}" class="form-control" type="text" readonly=True></td>
-                                <td><input id="acceptSp-${i}" class="form-control" type="text" readonly=True></td>
+                                <td><input id="acceptBp-${i}" class="form-control" type="text" readonly=True></td>
                                 <td><input id="acceptQty-${i}" class="form-control"  type="text" name="acceptQty" data-id="${i}"></td>
                             </tr>
                             `)
@@ -994,9 +1104,11 @@ $(document).ready(function () {
                             $(`#acceptDate-${i}`).val(response.acceptance_list.accepted_date[i])
                             $(`#acceptPName-${i}`).val(response.acceptance_list.parts_name[i]);
                             $(`#acceptPNo-${i}`).val(response.acceptance_list.parts_number[i]);
-                            $(`#acceptSp-${i}`).val(response.acceptance_list.buy_price[i]);
+                            $(`#acceptBp-${i}`).val(response.acceptance_list.buy_price[i]);
                             $(`#acceptQty-${i}`).val(response.acceptance_list.acceptance_qty[i]);
                         }
+
+
                         $('input[name="acceptQty"]').on('focus', function () {
                             let dataId = $(this).data('id')
                             $(`#acceptQty-${dataId}`).on('input', function () {
@@ -1004,9 +1116,14 @@ $(document).ready(function () {
                                 let poBal = parseInt(response.acceptance_list.balance[dataId]);
                                 let changedQty = parseInt($(`#acceptQty-${dataId}`).val());
                                 if ( acceptedQty < changedQty) {
-                                    if ((poBal + acceptedQty)  < changedQty)
+                                    if ((poBal + acceptedQty) < changedQty) {
                                         alert("Changed Qty must be less than remaining PO Bal.");
                                         $(this).val("");
+                                    }
+                                    //     else {
+                                    //     alert("Changed Qty must be less than remaining Original Qty.");
+                                    //     $(this).val("");
+                                    // }   
                                 } else {
                                     return false
                                 }
@@ -1021,6 +1138,82 @@ $(document).ready(function () {
                                 }
                             });
                         });
+                    }
+                },
+                error: function () {
+                    alert("Please input valid Order Number.");
+                }
+            });
+        }
+    });
+
+    // Acceptance Delete --------------------
+    $('#enter4').click(function () {
+        if (mode === "3") {
+            let acceptOrderNumber = $('#acceptOrderNumber').val();
+            let orderId = $('#orderId').val();
+            $('#orderNumCopy').val(acceptOrderNumber);
+            $.ajax({
+                url: '/acceptance-update-data-get/',
+                type: 'get',
+                data: {
+                    'acceptOrderNumber': acceptOrderNumber,
+                    'orderId': orderId
+                },
+                dataType: 'json',
+                success: function (response) {
+                    let dataLength = Object.keys(response.acceptance_list.id_x).length;
+                    $('#acceptPrjCode').val(response.acceptance_list.prj_code[0]);
+                    if (dataLength === 0) {
+                        alert("Please input valid Order ID. Acceptance Data Does not exist"); 
+                    } else if (response.acceptance_list.order_number[0] != acceptOrderNumber) {
+                        alert("Input Order No and ID does not match.");
+                    } else {
+                        modeBlock();
+                        btnShowUp();
+                        $('#enter4').hide();
+                        $('#acceptOrderNumber').prop("readonly", true);
+                        $('#orderId').prop("readonly", true);
+
+                        $("#acceptanceEntryTable > thead").prepend(`
+                        <tr class="text-center">
+                            <th colspan="2" width="5%">ID</th>
+                            <th width="10%">Item Code</th>
+                            <th width="15%">Supplier</th>
+                            <th width="15%">Accept Date</th>
+                            <th width="15%">Description</th>
+                            <th width="15%">Maker P/N</th>
+                            <th width="10%">B/P</th>
+                            <th width="10%">Accept Qty</th>
+                        </tr>
+                        `)
+                        for (i = 0; i < dataLength; i++) {
+                            $("#acceptanceEntryTable > tbody:last-child").append(`  
+                            <tr id=${i}>
+                                <input id="orderId-${i}" class="form-control" type="hidden" name="orderId" readonly=True>
+                                <input id="deleteCheckNum-${i}" type="hidden" name="deleteCheckNum" value="0">
+                                <td class="delete-check-box"><input id="deleteCheck-${i}" class="check-box" type="checkbox" data-id="${i}" name="deleteCheck" value="0"></td>
+                                <td><input id="id-${i}" class="form-control" type="text" name="acceptId" readonly=True></td>
+                                <td><input id="acceptItem-${i}" class="form-control" type="text" name="acceptItem" maxlength="5" readonly=True ></td>
+                                <td><input id="supplier-${i}" class="form-control" type="text" name="supplier" maxlength="" readonly=True ></td>
+                                <td><input id="acceptDate-${i}" class="form-control" type="text" name="acceptDate2" maxlength="10" readonly=True></td>
+                                <td><input id="acceptPName-${i}" class="form-control form-control" type="text" readonly=True></td>
+                                <td><input id="acceptPNo-${i}" class="form-control" type="text" readonly=True></td>
+                                <td><input id="acceptBp-${i}" class="form-control" type="text" readonly=True></td>
+                                <td><input id="acceptQty-${i}" class="form-control"  type="text" name="acceptQty" data-id="${i}" readonly=True></td>
+                            </tr>
+                            `)
+                            $(`#orderId-${i}`).val(response.acceptance_list.id_y[i]);
+                            $(`#id-${i}`).val(response.acceptance_list.id_x[i]);
+                            $(`#acceptItem-${i}`).val(response.acceptance_list.item_code[i]);
+                            $(`#supplier-${i}`).val(response.acceptance_list.supplier[i]);
+                            $(`#acceptDate-${i}`).val(response.acceptance_list.accepted_date[i])
+                            $(`#acceptPName-${i}`).val(response.acceptance_list.parts_name[i]);
+                            $(`#acceptPNo-${i}`).val(response.acceptance_list.parts_number[i]);
+                            $(`#acceptBp-${i}`).val(response.acceptance_list.buy_price[i]);
+                            $(`#acceptQty-${i}`).val(response.acceptance_list.acceptance_qty[i]);
+                        }
+                        deleteCheck();
                     }
                 },
                 error: function () {
@@ -1074,16 +1267,30 @@ $(document).ready(function () {
                 });  
             }              
         } else if (mode === "3") {
-
+            if (!confirm('Do you Delete Checked Line?')) {
+                return false;
+            } else {
+                let serializedData = $('#acceptanceEntryForm').serialize();
+                $.ajax({
+                    url: '/acceptance-delete-confirm/',
+                    type: 'post',
+                    data: serializedData,
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.result) {
+                            location.reload();
+                        }
+                    },
+                    error: function () {
+                        alert("error");
+                    }
+                });
+            }  
         }
     });
     // -------------------------------------
 
-
-
-
-
-  // Order Info ////////////////////////////////////////////////////////////////////////////////////
+// Order Info ////////////////////////////////////////////////////////////////////////////////////
     // Sorting Order Information ------------
     $('#sortOrderDateS').on('input',function (event) {
         let date = $('#sortOrderDateS');
@@ -1096,31 +1303,6 @@ $(document).ready(function () {
         let next = $('#enter3');
         dateValidation(date, next);
     });
-    // -------------------------------------
-
-
-
-  // Common Function ////////////////////////////////////////////////////////////////////////////////////
-    // date validation ---------------------
-    function dateValidation(date,next) {
-        if (date.val().length === 8) {
-            let year = date.val().slice(0, 4);
-            let month = date.val().slice(4, 6);
-            let day = date.val().slice(6, 8);
-            let validated = `${year}-${month}-${day}`;
-            date.val(validated);
-            next.focus();
-        }  else {
-            return false
-        }
-    };
-    //--------------------------------------
-
-    function modeChkBoxDiabled() {
-        $('#chkbox1').prop('disabled', true);
-        $('#chkbox2').prop('disabled', true);
-        $('#chkbox3').prop('disabled', true);
-    }
 
 });
 

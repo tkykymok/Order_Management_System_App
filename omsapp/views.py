@@ -37,7 +37,6 @@ class OrderEntryView(View, LoginRequiredMixin):
 class PrjCodeGet(View, LoginRequiredMixin):
     def post(self, request):
         prj_code_get = request.POST.getlist('prjCode', None)
-        print(prj_code_get)
         prj_code = Project.objects.get(prj_code = prj_code_get[0])
         customer_info = prj_code.customer_code
         person_incharge = request.user
@@ -121,24 +120,24 @@ class OrderUpdateConfirm(View):
         
         for i in range(len(order_id)):
             update_order = Order.objects.get(id=order_id[i])
-            if update_order.shipment_qty == 0 and update_order.acceptance_qty == 0:
-                print(update_order.shipment_qty)
-                update_order.supplier_delivery_date = suppDates[i]
-                update_order.customer_delivery_date = custDates[i]
-                update_order.quantity = int(qtys[i])
-                update_order.balance = int(qtys[i])
-                update_order.save()
-            else:
-                return JsonResponse({'result':False}, status=200)
-                pass
-                
+            update_order.supplier_delivery_date = suppDates[i]
+            update_order.customer_delivery_date = custDates[i]
+            update_order.save()
+            
         return JsonResponse({'result':True}, status=200)
+                
+        
         
 class OrderDeleteConfirm(View):
     def post(self, request):
+        delete_check = request.POST.getlist('deleteCheckNum', None)
         order_id = request.POST.getlist('orderId', None)
+        
         for i in range(len(order_id)):
-            Order.objects.get(id=order_id[i]).delete()
+            if delete_check[i] == "1":
+                Order.objects.get(id=order_id[i]).delete()
+            else:
+                pass
     
         return JsonResponse({'result':True}, status=200)
 
@@ -166,9 +165,7 @@ class ShipmentDataGet(View):
             'buy_price'
         ])
         
-        data1 = pd.merge(rf_ship_order, rf_item, on='item_code', how='left')
-        print(data1)
-        
+        data1 = pd.merge(rf_ship_order, rf_item, on='item_code', how='left')        
         data2 = data1.to_dict()
     
         return JsonResponse({'ship_order_list':data2}, status=200)
@@ -208,17 +205,13 @@ class ShipmentUpdateDataGet(View):
         input_order_number = request.GET.get('shipOrderNumber', None)
         input_id = request.GET.get('orderId', None)
         order = Order.objects.get(id=input_id)
-        
-        print(input_id)
-        
+                
         rf_ship_order = read_frame(Shipment.objects.filter(order_number=order).order_by('id'))
-        print(rf_ship_order)
         
         rf_order = read_frame(Order.objects.filter(id=input_id),fieldnames=[
             'id',
             'order_number'
         ])
-        print(rf_order)
         
         rf_item = read_frame(Item.objects.all(),fieldnames=[
             'item_code',
@@ -233,11 +226,9 @@ class ShipmentUpdateDataGet(View):
         data1 = pd.merge(rf_ship_order, rf_item, on='item_code', how='left')
         data2 = pd.merge(data1, rf_order, on='order_number', how='inner')
         
-        print(data2)
         data3 = data2.to_dict()
         return JsonResponse({'shipment_list':data3}, status=200)
-        # return JsonResponse({'shipment_list':'ok'}, status=200)
-    
+        
 
 class ShipmentUpdateConfirm(View):
     def post(self,request):
@@ -266,8 +257,26 @@ class ShipmentUpdateConfirm(View):
             
         
         return JsonResponse({'result':True}, status=200)
-        
 
+class ShipmentDeleteConfirm(View):
+    def post(self, request):
+        delete_check = request.POST.getlist('deleteCheckNum', None)
+        orderId_list = request.POST.getlist('orderId', None)
+        shipId_list = request.POST.getlist('shipId', None)
+          
+        for i in range (len(shipId_list)):
+            if delete_check[i] == "1":
+                parent_order = Order.objects.get(id=orderId_list[i])
+                data = Shipment.objects.get(id=shipId_list[i])
+                original_qty = data.shipment_qty
+                parent_order.shipment_qty -= int(original_qty)
+                parent_order.stock += int(original_qty)
+                parent_order.save()
+                data.delete()
+            else:
+                pass
+            
+        return JsonResponse({'result':True}, status=200)
     
 
 
@@ -297,8 +306,6 @@ class AcceptanceDataGet(View):
         ])
         
         data1 = pd.merge(rf_accept_order, rf_item, on='item_code', how='left')
-        
-        print(data1)
         
         data2 = data1.to_dict()
     
@@ -348,7 +355,9 @@ class AcceptanceUpdateDataGet(View):
         rf_order = read_frame(Order.objects.filter(id=input_id),fieldnames=[
             'id',
             'order_number',
-            'balance'
+            'balance',
+            'stock'
+            
         ])
         rf_item = read_frame(Item.objects.all(),fieldnames=[
             'item_code',
@@ -362,9 +371,7 @@ class AcceptanceUpdateDataGet(View):
   
         data1 = pd.merge(rf_accept_order, rf_item, on='item_code', how='left')
         data2 = pd.merge(data1, rf_order, on='order_number', how='inner')
-        print(data2)
         data3 = data2.to_dict()
-        print(data3)
         return JsonResponse({'acceptance_list':data3}, status=200)
    
 
@@ -381,33 +388,38 @@ class AcceptanceUpdateConfirm(View):
             changed_accept_date = accept_date_list[i]
             original_qty = data.acceptance_qty
             changed_qty = int(qty_list[i])
-            if original_qty == changed_qty:
-                pass
-            else:
-                data.accepted_date = changed_accept_date
-                data.acceptance_qty = changed_qty
-                data.save()
-                parent_order.acceptance_qty -= int(original_qty)
-                parent_order.acceptance_qty += int(changed_qty)
-                parent_order.stock -= int(original_qty)
-                parent_order.stock += int(changed_qty)
-                parent_order.balance += int(original_qty)
-                parent_order.balance -= int(changed_qty)
-                parent_order.save()
+            data.accepted_date = changed_accept_date
+            data.acceptance_qty = changed_qty
+            data.save()
+            parent_order.acceptance_qty -= int(original_qty)
+            parent_order.acceptance_qty += int(changed_qty)
+            parent_order.stock -= int(original_qty)
+            parent_order.stock += int(changed_qty)
+            parent_order.balance += int(original_qty)
+            parent_order.balance -= int(changed_qty)
+            parent_order.save()
 
         return JsonResponse({'result':True}, status=200)
 
-
-
-
-
-
-
-
-
-
-
-
+class AcceptanceDeleteConfirm(View):
+    def post(self, request):
+        delete_check = request.POST.getlist('deleteCheckNum', None)
+        orderId_list = request.POST.getlist('orderId', None)
+        acceptId_list = request.POST.getlist('acceptId', None)
+        
+        for i in range (len(acceptId_list)):
+            if delete_check[i] == "1":
+                parent_order = Order.objects.get(id=orderId_list[i])
+                data = Acceptance.objects.get(id=acceptId_list[i])
+                original_qty = data.acceptance_qty
+                parent_order.acceptance_qty -= int(original_qty)
+                parent_order.balance += int(original_qty)
+                parent_order.stock -= int(original_qty)
+                parent_order.save()
+                data.delete()
+            else:
+                pass
+        return JsonResponse({'result':True}, status=200)
 
     
 ### Order Info ########################### 
@@ -445,7 +457,7 @@ class OrderInfoView(View, LoginRequiredMixin):
             on='order_number', 
             how='inner'
             )
-        print(data2)
+ 
 
         # 1. prj_code only
         if input_prj_code != "" and input_order_number == "" and input_order_date_s == "" and input_order_date_e == "":
@@ -457,7 +469,6 @@ class OrderInfoView(View, LoginRequiredMixin):
                 'order_date_s':input_order_date_s,
                 'order_date_e':input_order_date_e}
             print('1')
-            print(type(order_list.values) )
             return render(request, 'omsapp/order_info.html',context)
             
         # 2. Order_No. only
@@ -597,17 +608,12 @@ class OrderInfoView(View, LoginRequiredMixin):
             print('11')
             return render(request, 'omsapp/order_info.html',context)
         
-        # 13. default
+        # 12. default
         elif input_prj_code is None and input_order_number is None and input_order_date_s is None and input_order_date_e is None:
-            print('13')
-            print(input_prj_code)
-            print(input_order_number)
-            print(input_order_date_s)
-            print(input_order_date_e)
-            
+            print('12')            
             return render(request, 'omsapp/order_info.html')
         
-        # 12. All Input 
+        # 13. All Input 
         else:
             order_date_s = pd.to_datetime(input_order_date_s).floor('D')
             order_date_e = pd.to_datetime(input_order_date_e).floor('D')
@@ -621,6 +627,6 @@ class OrderInfoView(View, LoginRequiredMixin):
                 'order_number':input_order_number,
                 'order_date_s':input_order_date_s,
                 'order_date_e':input_order_date_e}
-            print('12')
+            print('13')
             return render(request, 'omsapp/order_info.html',context)
             
