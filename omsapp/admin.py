@@ -33,7 +33,7 @@ class SupplierAdmin(admin.ModelAdmin):
     list_per_page = 25  
 
 class ItemAdmin(admin.ModelAdmin):
-    list_display = ('item_code', 'parts_name', 'parts_number', 'sell_price', 'buy_price', 'supplier')
+    list_display = ('item_code','prj_code','parts_name', 'parts_number', 'sell_price', 'buy_price', 'supplier','stock')
     list_display_links = ('item_code', 'parts_name')
     list_filter = ('item_code', )
     list_per_page = 25 

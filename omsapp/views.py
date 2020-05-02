@@ -179,7 +179,7 @@ class ShipmentComplete(View):
         
         for i in range(len(ship_qty_list)):
             if ship_qty_list[i] == "":
-                break
+                pass
             else:      
                 Shipment.objects.create(
                     user = request.user,
@@ -191,13 +191,16 @@ class ShipmentComplete(View):
                 
         for i in range(len(order_id)):
             order_data = Order.objects.get(id=int(order_id[i]))
+            item_data = Item.objects.get(item_code=item_code_list[i])
             if ship_qty_list[i] == '':
                 pass
             else:
                 order_data.shipment_qty += int(ship_qty_list[i])
                 order_data.stock -= int(ship_qty_list[i])
                 order_data.save()
-        
+                item_data.stock -= int(ship_qty_list[i])
+                item_data.save()
+                
         return JsonResponse({'result':True}, status=200)
     
 class ShipmentUpdateDataGet(View):
@@ -233,6 +236,7 @@ class ShipmentUpdateDataGet(View):
 class ShipmentUpdateConfirm(View):
     def post(self,request):
         orderId_list = request.POST.getlist('orderId', None)
+        item_code_list = request.POST.getlist('shipItem', None)
         ship_date_list = request.POST.getlist('shipDate2', None)
         shipId_list = request.POST.getlist('shipId', None)
         qty_list = request.POST.getlist('shipQty', None)
@@ -240,6 +244,7 @@ class ShipmentUpdateConfirm(View):
         for i in range (len(shipId_list)):
             parent_order = Order.objects.get(id=orderId_list[i])
             data = Shipment.objects.get(id=shipId_list[i])
+            item_data = Item.objects.get(item_code=item_code_list[i])
             changed_ship_date = ship_date_list[i]
             original_qty = data.shipment_qty
             changed_qty = int(qty_list[i])
@@ -254,6 +259,9 @@ class ShipmentUpdateConfirm(View):
                 parent_order.stock += int(original_qty)
                 parent_order.stock -= int(changed_qty)
                 parent_order.save()
+                item_data.stock += int(original_qty)
+                item_data.stock -= int(changed_qty)
+                item_data.save()
             
         
         return JsonResponse({'result':True}, status=200)
@@ -262,17 +270,22 @@ class ShipmentDeleteConfirm(View):
     def post(self, request):
         delete_check = request.POST.getlist('deleteCheckNum', None)
         orderId_list = request.POST.getlist('orderId', None)
+        item_code_list = request.POST.getlist('shipItem', None)
         shipId_list = request.POST.getlist('shipId', None)
           
         for i in range (len(shipId_list)):
             if delete_check[i] == "1":
                 parent_order = Order.objects.get(id=orderId_list[i])
                 data = Shipment.objects.get(id=shipId_list[i])
+                item_data = Item.objects.get(item_code=item_code_list[i])
                 original_qty = data.shipment_qty
                 parent_order.shipment_qty -= int(original_qty)
                 parent_order.stock += int(original_qty)
                 parent_order.save()
                 data.delete()
+                item_data.stock += int(original_qty)
+                item_data.save()
+                
             else:
                 pass
             
@@ -333,6 +346,7 @@ class AcceptanceComplete(View):
                 
         for i in range(len(order_id)):
             order_data = Order.objects.get(id=int(order_id[i]))
+            item_data = Item.objects.get(item_code=item_code_list[i])
             if accept_qty_list[i] == '':
                 pass
             else:
@@ -340,6 +354,8 @@ class AcceptanceComplete(View):
                 order_data.stock += int(accept_qty_list[i])
                 order_data.balance -= int(accept_qty_list[i])
                 order_data.save()
+                item_data.stock += int(accept_qty_list[i])
+                item_data.save()
         
         return JsonResponse({'result':True}, status=200)
     
@@ -378,6 +394,7 @@ class AcceptanceUpdateDataGet(View):
 class AcceptanceUpdateConfirm(View):
     def post(self,request):
         orderId_list = request.POST.getlist('orderId', None)
+        item_code_list = request.POST.getlist('acceptItem', None)
         accept_date_list = request.POST.getlist('acceptDate2', None)
         acceptId_list = request.POST.getlist('acceptId', None)
         qty_list = request.POST.getlist('acceptQty', None)
@@ -385,6 +402,7 @@ class AcceptanceUpdateConfirm(View):
         for i in range (len(acceptId_list)):
             parent_order = Order.objects.get(id=orderId_list[i])
             data = Acceptance.objects.get(id=acceptId_list[i])
+            item_data = Item.objects.get(item_code=item_code_list[i])
             changed_accept_date = accept_date_list[i]
             original_qty = data.acceptance_qty
             changed_qty = int(qty_list[i])
@@ -398,6 +416,10 @@ class AcceptanceUpdateConfirm(View):
             parent_order.balance += int(original_qty)
             parent_order.balance -= int(changed_qty)
             parent_order.save()
+            item_data.stock -= int(original_qty)
+            item_data.stock += int(changed_qty)
+            item_data.save()
+
 
         return JsonResponse({'result':True}, status=200)
 
@@ -405,18 +427,22 @@ class AcceptanceDeleteConfirm(View):
     def post(self, request):
         delete_check = request.POST.getlist('deleteCheckNum', None)
         orderId_list = request.POST.getlist('orderId', None)
+        item_code_list = request.POST.getlist('acceptItem', None)
         acceptId_list = request.POST.getlist('acceptId', None)
         
         for i in range (len(acceptId_list)):
             if delete_check[i] == "1":
                 parent_order = Order.objects.get(id=orderId_list[i])
                 data = Acceptance.objects.get(id=acceptId_list[i])
+                item_data = Item.objects.get(item_code=item_code_list[i])
                 original_qty = data.acceptance_qty
                 parent_order.acceptance_qty -= int(original_qty)
                 parent_order.balance += int(original_qty)
                 parent_order.stock -= int(original_qty)
                 parent_order.save()
                 data.delete()
+                item_data.stock -= int(original_qty)
+                item_data.save()
             else:
                 pass
         return JsonResponse({'result':True}, status=200)
@@ -848,7 +874,6 @@ class AcceptanceInfoView(View, LoginRequiredMixin):
             print('13')      
             return render(request, 'omsapp/acceptance_info.html',context)
 
-
 class ShipmentInfoView(View, LoginRequiredMixin):
     def get(self, request):   
         input_prj_code = request.GET.get('prjCode', None)
@@ -1001,7 +1026,7 @@ class ShipmentInfoView(View, LoginRequiredMixin):
         
         # 9. Order_No and order_date_s
         elif input_prj_code == "" and input_order_number != "" and input_ship_date_s != "" and input_ship_date_e == "":
-            ship_date_s = pd.to_datetime(input_order_date_s).floor('D')
+            ship_date_s = pd.to_datetime(input_ship_date_s).floor('D')
             data3 = data2[data2['order_number']==input_order_number]
             ship_list = data3[data3['shipped_date']>=ship_date_s]
             context = {
@@ -1016,8 +1041,8 @@ class ShipmentInfoView(View, LoginRequiredMixin):
         
         # 10. Order_No and order_date_s and order_date_e
         elif input_prj_code == "" and input_order_number != "" and input_ship_date_s != "" and input_ship_date_e != "":
-            ship_date_s = pd.to_datetime(input_order_date_s).floor('D')
-            ship_date_e = pd.to_datetime(input_order_date_e).floor('D')
+            ship_date_s = pd.to_datetime(input_ship_date_s).floor('D')
+            ship_date_e = pd.to_datetime(input_ship_date_e).floor('D')
             data3 = data2[data2['order_number']==input_order_number]
             data4 = data3[data3['shipped_date']>=ship_date_s]
             ship_list = data4[data4['shipped_date']<=ship_date_e]
@@ -1066,3 +1091,126 @@ class ShipmentInfoView(View, LoginRequiredMixin):
                 }
             print('13')      
             return render(request, 'omsapp/shipment_info.html',context)
+
+class InventoryInfoView(View, LoginRequiredMixin):
+    def get(self, request):
+        input_prj_code = request.GET.get('prjCode', None)
+        input_item_code = request.GET.get('itemCode', None)
+        input_parts_num = request.GET.get('partsNumber', None) 
+
+        rf_item = read_frame(Item.objects.all())
+        data1 = rf_item
+        
+        data1['amount'] = data1['stock'] * data1['buy_price']
+        
+        
+        print(data1)
+        
+        # 1. Prj Code
+        if input_prj_code != "" and input_item_code == "" and input_parts_num == "":
+            item_list = data1[data1['prj_code']==input_prj_code]
+            context = {
+                'item_list':item_list, 
+                'prj_code':input_prj_code, 
+                'item_code':input_item_code,
+                'parts_num':input_parts_num
+                }
+            print('1')
+            return render(request, 'omsapp/inventory_info.html', context)
+
+        # 2. Item Code
+        elif input_prj_code == "" and input_item_code != "" and input_parts_num == "":
+            item_list = data1[data1['item_code']==input_item_code]
+            context = {
+                'item_list':item_list, 
+                'prj_code':input_prj_code, 
+                'item_code':input_item_code,
+                'parts_num':input_parts_num
+                }
+            print('2')
+            return render(request, 'omsapp/inventory_info.html', context)
+            
+        # 3. P/N
+        elif input_prj_code == "" and input_item_code == "" and input_parts_num != "":
+            item_list = data1[data1['parts_number']==input_parts_num]
+            context = {
+                'item_list':item_list, 
+                'prj_code':input_prj_code, 
+                'item_code':input_item_code,
+                'parts_num':input_parts_num
+                }
+            print('3')
+            return render(request, 'omsapp/inventory_info.html', context)
+            
+        # 4. Prj Code & Item Code
+        elif input_prj_code != "" and input_item_code != "" and input_parts_num == "":
+            data2 = data1[data1['prj_code']==input_prj_code]
+            item_list = data2[data2['item_code']==input_item_code]
+            context = {
+                'item_list':item_list, 
+                'prj_code':input_prj_code, 
+                'item_code':input_item_code,
+                'parts_num':input_parts_num
+                }
+            print('4')
+            return render(request, 'omsapp/inventory_info.html', context)
+            
+        # 5. Prj Code & P/N
+        elif input_prj_code != "" and input_item_code == "" and input_parts_num != "":
+            data2 = data1[data1['prj_code']==input_prj_code]
+            item_list = data2[data2['parts_number']==input_parts_num]
+            context = {
+                'item_list':item_list, 
+                'prj_code':input_prj_code, 
+                'item_code':input_item_code,
+                'parts_num':input_parts_num
+                }
+            print('5')
+            return render(request, 'omsapp/inventory_info.html', context)
+        
+        # 6. Item Code & P/N
+        elif input_prj_code == "" and input_item_code != "" and input_parts_num != "":
+            data2 = data1[data1['item_code']==input_item_code]
+            item_list = data2[data2['parts_number']==input_parts_num]
+            context = {
+                'item_list':item_list, 
+                'prj_code':input_prj_code, 
+                'item_code':input_item_code,
+                'parts_num':input_parts_num
+                }
+            print('6')
+            return render(request, 'omsapp/inventory_info.html', context)
+            
+        # 7. No Input()
+        elif input_prj_code == "" and input_item_code == "" and input_parts_num == "":
+            item_list = data1
+            context = {
+                'item_list':item_list, 
+                'prj_code':input_prj_code, 
+                'item_code':input_item_code,
+                'parts_num':input_parts_num
+                }
+            print('7')
+            return render(request, 'omsapp/inventory_info.html', context)
+            
+        # 8. default()
+        elif input_prj_code is None and input_item_code is None and input_parts_num is None : 
+            print('8')
+            return render(request, 'omsapp/inventory_info.html')
+    
+        # 9. All Input()
+        else:
+            data2 = data1[data1['prj_code']==input_prj_code]
+            data3 = data2[data2['item_code']==input_item_code]
+            item_list = data3[data3['parts_number']==input_parts_num]
+            context = {
+                'item_list':item_list, 
+                'prj_code':input_prj_code, 
+                'item_code':input_item_code,
+                'parts_num':input_parts_num
+                }
+            print('9')
+            return render(request, 'omsapp/inventory_info.html', context)
+            
+
+            

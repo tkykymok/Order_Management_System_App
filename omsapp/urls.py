@@ -30,5 +30,8 @@ urlpatterns = [
     path('acceptance-update-confirm/', views.AcceptanceUpdateConfirm.as_view(), name='acceptance_update_confirm'),
     path('acceptance-delete-confirm/', views.AcceptanceDeleteConfirm.as_view(), name='acceptance_delete_confirm'),
     path('acceptance-info/', views.AcceptanceInfoView.as_view(), name='acceptance_info'),
+    
+    
+    path('inventory-info/', views.InventoryInfoView.as_view(), name='inventory_info'),
 
 ]
