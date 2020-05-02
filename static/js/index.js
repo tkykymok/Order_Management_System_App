@@ -12,7 +12,9 @@ $(document).ready(function () {
             let validated = `${year}-${month}-${day}`;
             date.val(validated);
             next.focus();
-        }  else {
+        } else if (date.val().length > 8){
+            date.val('')
+        } else {
             return false
         }
     };
@@ -1292,14 +1294,14 @@ $(document).ready(function () {
 
 // Order Info ////////////////////////////////////////////////////////////////////////////////////
     // Sorting Order Information ------------
-    $('#sortOrderDateS').on('input',function (event) {
-        let date = $('#sortOrderDateS');
-        let next = $('#sortOrderDateE');
+    $('#dateS').on('input', function (event) {
+        let date = $('#dateS');
+        let next = $('#dateE');
         dateValidation(date, next);          
     });
     
-    $('#sortOrderDateE').on('input',function (event) {
-        let date = $('#sortOrderDateE');
+    $('#dateE').on('input',function (event) {
+        let date = $('#dateE');
         let next = $('#enter3');
         dateValidation(date, next);
     });

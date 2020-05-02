@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load utils %}
+
+{% block content %}
+
+<div class="container-fluid">
+    <div class="ml-2 mt-3 mb-3">
+        <h2>Shipment Information</h2>
+    </div>
+    <div class="row">
+        <div class="col-6">
+        <form id="" class="entry-form" method="GET"> 
+            <table id="orderListTable" class="table table-sm bg-light table-bordered table-striped">
+                <tr>
+                    <th width="15%" >PRJ Code</th>
+                    <th>Order No.</th>
+                    <th>Ship Date/Start </th>
+                    <th>Ship Date/End</th>
+                    <th></th>
+                </tr>
+                <tr>
+                    <td><input id="sortPrjCode" class="form-control" type="text" name="prjCode" placeholder="" maxlength="4" value="{{prj_code}}"/></td>
+                    <td><input id="sortOrderNum" class="form-control" type="text" name="orderNum" placeholder="" maxlength="8" value="{{order_number}}"/></td>
+                    <td><input id="dateS" class="form-control" type="text" name="shipDateS" placeholder="yyyymmdd" maxlength="10" value="{{ship_date_s}}"/></td>
+                    <td><input id="dateE" class="form-control" type="text" name="shipDateE" placeholder="yyyymmdd" maxlength="10" value="{{ship_date_e}}" /></td>
+                    <td><button id="enter3" type="submit" class="btn btn-outline-dark btn-block">Enter</button></td>
+                </tr>
+            </table>
+        </form>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col">
+            <table id="" class="table table-sm bg-light table-bordered table-striped">
+                <tr>
+                    <th>PRJ Code</th>
+                    <th colspan="2">Shipment No</th>
+                    <th>Ship Date</th>
+                    <th>Customer</th>
+                    <th>Item Code</th>
+                    <th>Description</th>
+                    <th>Maker P/N</th>
+                    <th>S/P</th>
+                    <th>Shipperd Qty</th>
+                    <th>Amount</th>
+                    <th>PIC</th>
+
+                </tr>
+                
+                {% for index, row in ship_list.iterrows %}
+                <tr>
+                    <td>{{ row.prj_code }}</td>
+                    <td>{{ row.order_number }}</td>
+                    <td>{{ row.id }}</td>
+                    <td>{{ row.shipped_date | date:"Y-m-d"}}</td>
+                    <td>{{ row.customer }}</td>
+                    <td>{{ row.item_code }}</td>
+                    <td>{{ row.parts_name }}</td>
+                    <td>{{ row.parts_number }}</td>
+                    <td>¥{{ row.sell_price }}</td>
+                    <td>{{ row.shipment_qty | intcomma }}</td>
+                    <td>¥{{ row.amount | intcomma }}</td>
+                    <td>{{ row.user }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+{% endblock %}

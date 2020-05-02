@@ -321,7 +321,7 @@ class AcceptanceComplete(View):
         
         for i in range(len(accept_qty_list)):
             if accept_qty_list[i] == "":
-                break
+                pass
             else:      
                 Acceptance.objects.create(
                     user = request.user,
@@ -629,4 +629,440 @@ class OrderInfoView(View, LoginRequiredMixin):
                 'order_date_e':input_order_date_e}
             print('13')
             return render(request, 'omsapp/order_info.html',context)
+
+class AcceptanceInfoView(View, LoginRequiredMixin):
+    def get(self, request):   
+        input_prj_code = request.GET.get('prjCode', None)
+        input_order_number = request.GET.get('orderNum', None)
+        input_accept_date_s = request.GET.get('acceptDateS', None)
+        input_accept_date_e = request.GET.get('acceptDateE', None)    
+
+        rf_acceptance = read_frame(Acceptance.objects.all().order_by('id'))
+
+        rf_item = read_frame(Item.objects.all(),fieldnames=[
+            'item_code',
+            'prj_code', 
+            # 'customer', 
+            'supplier', 
+            'parts_name', 
+            'parts_number', 
+            # 'sell_price',
+            'buy_price'
+        ])
+        
+        data1 = pd.merge(
+            rf_acceptance.sort_values('accepted_date'), 
+            rf_item, 
+            on='item_code', 
+            how='left'
+            )
+      
+        
+        data2 = data1
+        
+        data2['amount'] = data2['acceptance_qty'] * data2['buy_price']
+        
+        print(data2)
+
+
+       # 1. prj_code only
+        if input_prj_code != "" and input_order_number == "" and input_accept_date_s == "" and input_accept_date_e == "":
+            accept_list = data2[data2['prj_code']==input_prj_code]
+            context = {
+                'accept_list':accept_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'accept_date_s':input_accept_date_s,
+                'accept_date_e':input_accept_date_e
+                }
+            print('1')
+            return render(request, 'omsapp/acceptance_info.html',context)
             
+        # 2. Order_No. only
+        elif input_prj_code == "" and input_order_number != "" and input_accept_date_s == "" and input_accept_date_e == "":
+            accept_list = data2[data2['order_number']==input_order_number]
+            context = {
+                'accept_list':accept_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'accept_date_s':input_accept_date_s,
+                'accept_date_e':input_accept_date_e
+                }
+            print('2')
+            return render(request, 'omsapp/acceptance_info.html',context)
+            
+        # 3. order_date_s only
+        elif input_prj_code == "" and input_order_number == "" and input_accept_date_s != "" and input_accept_date_e == "":
+            accept_date_s = pd.to_datetime(input_accept_date_s).floor('D')
+            accept_list = data2[data2['accepted_date']>=accept_date_s]         
+            context = {
+                'accept_list':accept_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'accept_date_s':input_accept_date_s,
+                'accept_date_e':input_accept_date_e
+                }
+            print('3')
+            return render(request, 'omsapp/acceptance_info.html',context)
+            
+        # 4. order_date_e only
+        elif input_prj_code == "" and input_order_number == "" and input_accept_date_s == "" and input_accept_date_e != "":
+            accept_list = data2[data2['accepted_date']<=accept_date_s]
+            context = {
+                'accept_list':accept_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'accept_date_s':input_accept_date_s,
+                'accept_date_e':input_accept_date_e
+                }
+            print('4')
+            return render(request, 'omsapp/acceptance_info.html',context)
+            
+        # 5. order_date_s and order_date_e
+        elif input_prj_code == "" and input_order_number == "" and input_accept_date_s != "" and input_accept_date_e != "":
+            accept_date_s = pd.to_datetime(input_accept_date_s).floor('D')
+            accept_date_e = pd.to_datetime(input_accept_date_e).floor('D')
+            data3 = data2[data2['accepted_date']>=accept_date_s]
+            accept_list = data3[data3['accepted_date']<=accept_date_e]
+            context = {
+                'accept_list':accept_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'accept_date_s':input_accept_date_s,
+                'accept_date_e':input_accept_date_e
+                }
+            print('5')
+            return render(request, 'omsapp/acceptance_info.html',context)
+        
+        # 6. prj_code and Order_No
+        elif input_prj_code != "" and input_order_number != "" and input_accept_date_s == "" and input_accept_date_e == "":
+            data3 = data2[data2['prj_code']==input_prj_code]
+            accept_list = data3[data3['order_number']==input_order_number]
+            context = {
+                'accept_list':accept_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'accept_date_s':input_accept_date_s,
+                'accept_date_e':input_accept_date_e
+                }
+            print('6')      
+            return render(request, 'omsapp/acceptance_info.html',context)
+        
+        # 7. prj_code and order_date_s
+        elif input_prj_code != "" and input_order_number == "" and input_accept_date_s != "" and input_accept_date_e == "":
+            accept_date_s = pd.to_datetime(input_accept_date_s).floor('D')
+            data3 = data2[data2['prj_code']==input_prj_code]
+            accept_list = data3[data3['accepted_date']>=accept_date_s]
+            context = {
+                'accept_list':accept_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'accept_date_s':input_accept_date_s,
+                'accept_date_e':input_accept_date_e
+                }
+            print('7')      
+            return render(request, 'omsapp/acceptance_info.html',context)
+            
+        # 8. prj_code and order_date_s and order_date_e
+        elif input_prj_code != "" and input_order_number == "" and input_accept_date_s != "" and input_accept_date_e != "":
+            accept_date_s = pd.to_datetime(input_accept_date_s).floor('D')
+            accept_date_e = pd.to_datetime(input_accept_date_e).floor('D')
+            data3 = data2[data2['prj_code']==input_prj_code]
+            data4 = data3[data3['accepted_date']>=accept_date_s]
+            accept_list = data4[data4['accepted_date']<=accept_date_e]
+            context = {
+                'accept_list':accept_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'accept_date_s':input_accept_date_s,
+                'accept_date_e':input_accept_date_e
+                }
+            print('8')      
+            return render(request, 'omsapp/acceptance_info.html',context)
+        
+        # 9. Order_No and order_date_s
+        elif input_prj_code == "" and input_order_number != "" and input_accept_date_s != "" and input_accept_date_e == "":
+            accept_date_s = pd.to_datetime(input_order_date_s).floor('D')
+            data3 = data2[data2['order_number']==input_order_number]
+            accept_list = data3[data3['accepted_date']>=accept_date_s]
+            context = {
+                'accept_list':accept_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'accept_date_s':input_accept_date_s,
+                'accept_date_e':input_accept_date_e
+                }
+            print('9')      
+            return render(request, 'omsapp/acceptance_info.html',context)
+        
+        # 10. Order_No and order_date_s and order_date_e
+        elif input_prj_code == "" and input_order_number != "" and input_accept_date_s != "" and input_accept_date_e != "":
+            accept_date_s = pd.to_datetime(input_order_date_s).floor('D')
+            accept_date_e = pd.to_datetime(input_order_date_e).floor('D')
+            data3 = data2[data2['order_number']==input_order_number]
+            data4 = data3[data3['accepted_date']>=accept_date_s]
+            accept_list = data4[data4['accepted_date']<=accept_date_e]
+            context = {
+                'accept_list':accept_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'accept_date_s':input_accept_date_s,
+                'accept_date_e':input_accept_date_e
+                }
+            print('10')      
+            return render(request, 'omsapp/acceptance_info.html',context)
+        
+        # 11. No input
+        elif input_prj_code == "" and input_order_number == "" and input_accept_date_s == "" and input_accept_date_e == "":
+            accept_list = data2 
+            context = {
+                'accept_list':accept_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'accept_date_s':input_accept_date_s,
+                'accept_date_e':input_accept_date_e
+                }
+            print('11')      
+            return render(request, 'omsapp/acceptance_info.html',context)
+        
+        # 12. default
+        elif input_prj_code is None and input_order_number is None and input_accept_date_s is None and input_accept_date_e is None:
+            print('12')            
+            return render(request, 'omsapp/acceptance_info.html')
+        
+        # 13. All Input 
+        else:
+            accept_date_s = pd.to_datetime(input_accept_date_s).floor('D')
+            accept_date_e = pd.to_datetime(input_accept_date_e).floor('D')
+            data3 = data2[data2['prj_code']==input_prj_code]
+            data4 = data3[data3['order_number']==input_order_number]
+            data5 = data4[data4['accepted_date']>=accept_date_s]
+            order_list = data5[data5['accepted_date']<=accept_date_e]
+            context = {
+                'accept_list':accept_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'accept_date_s':input_accept_date_s,
+                'accept_date_e':input_accept_date_e
+                }
+            print('13')      
+            return render(request, 'omsapp/acceptance_info.html',context)
+
+
+class ShipmentInfoView(View, LoginRequiredMixin):
+    def get(self, request):   
+        input_prj_code = request.GET.get('prjCode', None)
+        input_order_number = request.GET.get('orderNum', None)
+        input_ship_date_s = request.GET.get('shipDateS', None)
+        input_ship_date_e = request.GET.get('shipDateE', None)    
+
+        rf_shipment = read_frame(Shipment.objects.all().order_by('id'))
+
+        rf_item = read_frame(Item.objects.all(),fieldnames=[
+            'item_code',
+            'prj_code', 
+            'customer', 
+            # 'supplier', 
+            'parts_name', 
+            'parts_number', 
+            'sell_price',
+            # 'buy_price'
+        ])
+        
+        data1 = pd.merge(
+            rf_shipment.sort_values('shipped_date'), 
+            rf_item, 
+            on='item_code', 
+            how='left'
+            )
+      
+        
+        data2 = data1
+        
+        data2['amount'] = data2['shipment_qty'] * data2['sell_price']
+        
+        print(data2)
+
+
+        # 1. prj_code only
+        if input_prj_code != "" and input_order_number == "" and input_ship_date_s == "" and input_ship_date_e == "":
+            ship_list = data2[data2['prj_code']==input_prj_code]
+            context = {
+                'ship_list':ship_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'ship_date_s':input_ship_date_s,
+                'ship_date_e':input_ship_date_e
+                }
+            print('1')
+            return render(request, 'omsapp/shipment_info.html',context)
+            
+        # 2. Order_No. only
+        elif input_prj_code == "" and input_order_number != "" and input_ship_date_s == "" and input_ship_date_e == "":
+            ship_list = data2[data2['order_number']==input_order_number]
+            context = {
+                'ship_list':ship_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'ship_date_s':input_ship_date_s,
+                'ship_date_e':input_ship_date_e
+                }
+            print('2')
+            return render(request, 'omsapp/shipment_info.html',context)
+            
+        # 3. order_date_s only
+        elif input_prj_code == "" and input_order_number == "" and input_ship_date_s != "" and input_ship_date_e == "":
+            ship_date_s = pd.to_datetime(input_ship_date_s).floor('D')
+            ship_list = data2[data2['shipped_date']>=ship_date_s]         
+            context = {
+                'ship_list':ship_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'ship_date_s':input_ship_date_s,
+                'ship_date_e':input_ship_date_e
+                }
+            print('3')
+            return render(request, 'omsapp/shipment_info.html',context)
+            
+        # 4. order_date_e only
+        elif input_prj_code == "" and input_order_number == "" and input_ship_date_s == "" and input_ship_date_e != "":
+            ship_list = data2[data2['shipped_date']<=ship_date_s]
+            context = {
+                'ship_list':ship_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'ship_date_s':input_ship_date_s,
+                'ship_date_e':input_ship_date_e
+                }
+            print('4')
+            return render(request, 'omsapp/shipment_info.html',context)
+            
+        # 5. order_date_s and order_date_e
+        elif input_prj_code == "" and input_order_number == "" and input_ship_date_s != "" and input_ship_date_e != "":
+            ship_date_s = pd.to_datetime(input_ship_date_s).floor('D')
+            ship_date_e = pd.to_datetime(input_ship_date_e).floor('D')
+            data3 = data2[data2['shipped_date']>=ship_date_s]
+            ship_list = data3[data3['shipped_date']<=ship_date_e]
+            context = {
+                'ship_list':ship_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'ship_date_s':input_ship_date_s,
+                'ship_date_e':input_ship_date_e
+                }
+            print('5')
+            return render(request, 'omsapp/shipment_info.html',context)
+        
+        # 6. prj_code and Order_No
+        elif input_prj_code != "" and input_order_number != "" and input_ship_date_s == "" and input_ship_date_e == "":
+            data3 = data2[data2['prj_code']==input_prj_code]
+            ship_list = data3[data3['order_number']==input_order_number]
+            context = {
+                'ship_list':ship_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'ship_date_s':input_ship_date_s,
+                'ship_date_e':input_ship_date_e
+                }
+            print('6')      
+            return render(request, 'omsapp/shipment_info.html',context)
+        
+        # 7. prj_code and order_date_s
+        elif input_prj_code != "" and input_order_number == "" and input_ship_date_s != "" and input_ship_date_e == "":
+            ship_date_s = pd.to_datetime(input_ship_date_s).floor('D')
+            data3 = data2[data2['prj_code']==input_prj_code]
+            ship_list = data3[data3['shipped_date']>=ship_date_s]
+            context = {
+                'ship_list':ship_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'ship_date_s':input_ship_date_s,
+                'ship_date_e':input_ship_date_e
+                }
+            print('7')      
+            return render(request, 'omsapp/shipment_info.html',context)
+            
+        # 8. prj_code and order_date_s and order_date_e
+        elif input_prj_code != "" and input_order_number == "" and input_ship_date_s != "" and input_ship_date_e != "":
+            ship_date_s = pd.to_datetime(input_ship_date_s).floor('D')
+            ship_date_e = pd.to_datetime(input_ship_date_e).floor('D')
+            data3 = data2[data2['prj_code']==input_prj_code]
+            data4 = data3[data3['shipped_date']>=ship_date_s]
+            ship_list = data4[data4['shipped_date']<=ship_date_e]
+            context = {
+                'ship_list':ship_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'ship_date_s':input_ship_date_s,
+                'ship_date_e':input_ship_date_e
+                }
+            print('8')      
+            return render(request, 'omsapp/shipment_info.html',context)
+        
+        # 9. Order_No and order_date_s
+        elif input_prj_code == "" and input_order_number != "" and input_ship_date_s != "" and input_ship_date_e == "":
+            ship_date_s = pd.to_datetime(input_order_date_s).floor('D')
+            data3 = data2[data2['order_number']==input_order_number]
+            ship_list = data3[data3['shipped_date']>=ship_date_s]
+            context = {
+                'ship_list':ship_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'ship_date_s':input_ship_date_s,
+                'ship_date_e':input_ship_date_e
+                }
+            print('9')      
+            return render(request, 'omsapp/shipment_info.html',context)
+        
+        # 10. Order_No and order_date_s and order_date_e
+        elif input_prj_code == "" and input_order_number != "" and input_ship_date_s != "" and input_ship_date_e != "":
+            ship_date_s = pd.to_datetime(input_order_date_s).floor('D')
+            ship_date_e = pd.to_datetime(input_order_date_e).floor('D')
+            data3 = data2[data2['order_number']==input_order_number]
+            data4 = data3[data3['shipped_date']>=ship_date_s]
+            ship_list = data4[data4['shipped_date']<=ship_date_e]
+            context = {
+                'ship_list':ship_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'ship_date_s':input_ship_date_s,
+                'ship_date_e':input_ship_date_e
+                }
+            print('10')      
+            return render(request, 'omsapp/shipment_info.html',context)
+        
+        # 11. No input
+        elif input_prj_code == "" and input_order_number == "" and input_ship_date_s == "" and input_ship_date_e == "":
+            ship_list = data2 
+            context = {
+                'ship_list':ship_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'ship_date_s':input_ship_date_s,
+                'ship_date_e':input_ship_date_e
+                }
+            print('11')      
+            return render(request, 'omsapp/shipment_info.html',context)
+        
+        # 12. default
+        elif input_prj_code is None and input_order_number is None and input_ship_date_s is None and input_ship_date_e is None:
+            print('12')            
+            return render(request, 'omsapp/shipment_info.html')
+        
+        # 13. All Input 
+        else:
+            ship_date_s = pd.to_datetime(input_ship_date_s).floor('D')
+            ship_date_e = pd.to_datetime(input_ship_date_e).floor('D')
+            data3 = data2[data2['prj_code']==input_prj_code]
+            data4 = data3[data3['order_number']==input_order_number]
+            data5 = data4[data4['shipped_date']>=ship_date_s]
+            order_list = data5[data5['shipped_date']<=ship_date_e]
+            context = {
+                'ship_list':ship_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'ship_date_s':input_ship_date_s,
+                'ship_date_e':input_ship_date_e
+                }
+            print('13')      
+            return render(request, 'omsapp/shipment_info.html',context)
