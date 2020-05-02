@@ -20,7 +20,8 @@ urlpatterns = [
     path('shipment-update-data-get/', views.ShipmentUpdateDataGet.as_view(), name='shipment_update_data_get'),
     path('shipment-update-confirm/', views.ShipmentUpdateConfirm.as_view(), name='shipment_update_confirm'),
     path('shipment-delete-confirm/', views.ShipmentDeleteConfirm.as_view(), name='shipment_delete_confirm'),
-    
+    path('shipment-info/', views.ShipmentInfoView.as_view(), name='shipment_info'),
+
     
     path('acceptance-entry/', views.AcceptanceEntryView.as_view(), name='acceptance_entry'),
     path('acceptance-data-get/', views.AcceptanceDataGet.as_view(), name='acceptance_data_get'),
@@ -28,5 +29,6 @@ urlpatterns = [
     path('acceptance-update-data-get/', views.AcceptanceUpdateDataGet.as_view(), name='acceptance_update_data_get'),
     path('acceptance-update-confirm/', views.AcceptanceUpdateConfirm.as_view(), name='acceptance_update_confirm'),
     path('acceptance-delete-confirm/', views.AcceptanceDeleteConfirm.as_view(), name='acceptance_delete_confirm'),
+    path('acceptance-info/', views.AcceptanceInfoView.as_view(), name='acceptance_info'),
 
 ]
