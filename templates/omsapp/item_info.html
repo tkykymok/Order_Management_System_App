@@ -41,10 +41,12 @@
                     <th>Supplier</th>
                     <th>Description</th>
                     <th>Maker P/N</th>
+                    <th>CUR</th>
                     <th>S/P</th>
+                    <th>CUR</th>
                     <th>B/P</th>
                     <th>Stock</th>
-                    <th>Stock Value(JPY)</th>
+                    <th>Stock Value</th>
                     <th width="5%"></th>
                 </tr>
                 
@@ -56,7 +58,9 @@
                     <td>{{ row.supplier }}</td>
                     <td>{{ row.parts_name }}</td>
                     <td>{{ row.parts_number }}</td>
+                    <td>{{ row.sell_price_cur }}</td>
                     <td id="sp-{{row.id}}">{{ row.sell_price }}</td>
+                    <td>{{ row.buy_price_cur }}</td>
                     <td id="bp-{{row.id}}">{{ row.buy_price }}</td>
                     <td>{{ row.stock | intcomma }}</td>
                     <td>{{ row.amount | intcomma }}</td>

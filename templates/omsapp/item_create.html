@@ -13,24 +13,44 @@
                             <tr class="text-center">
                                 <th>Item Code</th>
                                 <th>PRJ Code</th>
-                                <th>Customer</th>
                                 <th>Supplier</th>
                                 <th>Description</th>
                                 <th>Maker P/N</th>
+                                <th width="5%">CUR</th>
                                 <th>S/P</th>
+                                <th width="5%">CUR</th>
                                 <th>B/P</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
                                 <td><input id="itemCode" class="form-control" type="text" name="itemCode" maxlength="5" readonly=True></td>
-                                <td><input id="prjCode" class="form-control" type="text" name="prjCode" maxlength="4"></td>
-                                <td><input id="customer" class="form-control" type="text" name="customer" maxlength="5"></td>
+                                <td><input id="prjCode1" class="form-control" type="text" name="prjCode" maxlength="4"></td>
                                 <td><input id="supplier" class="form-control" type="text" name="supplier" maxlength="5"></td>
                                 <td><input id="partsName" class="form-control" type="text" name="partsName" maxlength=""></td>
                                 <td><input id="partsNum" class="form-control" type="text" name="partsNum" maxlength=""></td>
+
+                                <td>
+                                    <select id="sellCur" class="form-control" type="text" name="sellCur">
+                                        <option value=""></option>
+                                        {% for sell_cur in sell_cur_list %}
+                                            <option value="{{sell_cur.currency}}">{{sell_cur.currency}}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+
                                 <td><input id="sellPrice" class="form-control" type="text" name="sellPrice" maxlength=""></td>
-                                <td><input id="buyPrice" class="form-control" type="text" name="buyPrice" maxlength=""></td>
+
+                                <td>
+                                    <select id="buyCur" class="form-control" type="text" name="buyCur">
+                                        <option value=""></option>
+                                        {% for buy_cur in buy_cur_list %}
+                                            <option value="{{buy_cur.currency}}">{{buy_cur.currency}}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+
+                                <td><input id="buyPrice" class="form-control" type="text" name="buyPrice" maxlength=""></td>                                
                             </tr>
                         </tbody>
                     </table>
@@ -52,11 +72,12 @@
                         <tr class="text-center">
                             <th>Item Code</th>
                             <th>PRJ Code</th>
-                            <th>Customer</th>
                             <th>Supplier</th>
                             <th>Description</th>
                             <th>Maker P/N</th>
+                            <th width="5%">CUR</th>
                             <th>S/P</th>
+                            <th width="5%">CUR</th>
                             <th>B/P</th>
                         </tr>
                     </thead>

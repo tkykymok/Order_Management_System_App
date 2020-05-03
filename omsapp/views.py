@@ -6,7 +6,7 @@ from django.views.generic import (
     DetailView,
     UpdateView
 )
-from omsapp.models import Order, Item, OrderNumber, Order, Project, User, Shipment, Acceptance, Customer, Supplier
+from omsapp.models import Order, Item, OrderNumber, Order, Project, User, Shipment, Acceptance, Customer, Supplier, Currency_S, Currency_B
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from django.urls import reverse_lazy
@@ -38,7 +38,7 @@ class PrjCodeGet(View, LoginRequiredMixin):
     def post(self, request):
         prj_code_get = request.POST.getlist('prjCode', None)
         prj_code = Project.objects.get(prj_code = prj_code_get[0])
-        customer_info = prj_code.customer_code
+        customer_info = prj_code.customer
         person_incharge = request.user
         return JsonResponse({'customer_info':model_to_dict(customer_info), 'person_incharge':model_to_dict(person_incharge)}, status=200)
     
@@ -158,14 +158,22 @@ class ShipmentDataGet(View):
         rf_item = read_frame(Item.objects.all(),fieldnames=[
             'item_code',
             'prj_code',
-            'customer',
             'parts_name', 
             'parts_number', 
+            'sell_price_cur',
             'sell_price',
+            'buy_price_cur',
             'buy_price'
         ])
         
-        data1 = pd.merge(rf_ship_order, rf_item, on='item_code', how='left')        
+        rf_project = read_frame(Project.objects.all(), fieldnames=[
+            'prj_code',
+            'customer'
+        ])
+        
+        data1 = pd.merge(rf_ship_order, rf_item, on='item_code', how='left')
+        data1 = pd.merge(data1, rf_project, on='prj_code', how='inner')
+             
         data2 = data1.to_dict()
     
         return JsonResponse({'ship_order_list':data2}, status=200)
@@ -219,14 +227,23 @@ class ShipmentUpdateDataGet(View):
         rf_item = read_frame(Item.objects.all(),fieldnames=[
             'item_code',
             'prj_code',
-            'customer',
             'parts_name', 
             'parts_number', 
+            'sell_price_cur',
             'sell_price',
+            'buy_price_cur',
             'buy_price'
         ])
+        
+        rf_project = read_frame(Project.objects.all(), fieldnames=[
+            'prj_code',
+            'customer'
+        ])
+        
   
         data1 = pd.merge(rf_ship_order, rf_item, on='item_code', how='left')
+        data1 = pd.merge(data1, rf_project, on='prj_code', how='inner')
+        print(data1)
         data2 = pd.merge(data1, rf_order, on='order_number', how='inner')
         
         data3 = data2.to_dict()
@@ -314,11 +331,20 @@ class AcceptanceDataGet(View):
             'supplier',
             'parts_name', 
             'parts_number', 
+            'sell_price_cur',
             'sell_price',
+            'buy_price_cur',
             'buy_price'
         ])
         
+        rf_project = read_frame(Project.objects.all(), fieldnames=[
+            'prj_code',
+            'customer'
+        ])
+        
+   
         data1 = pd.merge(rf_accept_order, rf_item, on='item_code', how='left')
+        data1 = pd.merge(data1, rf_project, on='prj_code', how='inner')
         
         data2 = data1.to_dict()
     
@@ -381,11 +407,21 @@ class AcceptanceUpdateDataGet(View):
             'supplier',
             'parts_name', 
             'parts_number', 
+            'sell_price_cur',
             'sell_price',
+            'buy_price_cur',
             'buy_price'
         ])
-  
+        
+        rf_project = read_frame(Project.objects.all(), fieldnames=[
+            'prj_code',
+            'customer'
+        ])
+        
+   
         data1 = pd.merge(rf_accept_order, rf_item, on='item_code', how='left')
+        data1 = pd.merge(data1, rf_project, on='prj_code', how='inner')
+              
         data2 = pd.merge(data1, rf_order, on='order_number', how='inner')
         data3 = data2.to_dict()
         return JsonResponse({'acceptance_list':data3}, status=200)
@@ -456,20 +492,24 @@ class OrderInfoView(View, LoginRequiredMixin):
         input_order_date_s = request.GET.get('orderDateS', None)
         input_order_date_e = request.GET.get('orderDateE', None)    
     
-       
         rf_order = read_frame(Order.objects.all().order_by('id'))
      
         rf_item = read_frame(Item.objects.all(),fieldnames=[
             'item_code',
             'prj_code', 
-            'customer', 
             'supplier', 
             'parts_name', 
             'parts_number', 
             'sell_price','buy_price'
         ])
         
+        rf_project = read_frame(Project.objects.all(), fieldnames=[
+            'prj_code',
+            'customer'
+        ])
+        
         data1 = pd.merge(rf_order, rf_item, on='item_code', how='inner')
+        data1 = pd.merge(data1, rf_project, on='prj_code', how='inner')
         
         rf_order_number = read_frame(OrderNumber.objects.all(), fieldnames=[
             'order_number',
@@ -632,6 +672,8 @@ class OrderInfoView(View, LoginRequiredMixin):
                 'order_date_s':input_order_date_s,
                 'order_date_e':input_order_date_e}
             print('11')
+            print(order_list)
+            
             return render(request, 'omsapp/order_info.html',context)
         
         # 12. default
@@ -888,21 +930,26 @@ class ShipmentInfoView(View, LoginRequiredMixin):
         rf_item = read_frame(Item.objects.all(),fieldnames=[
             'item_code',
             'prj_code', 
-            'customer', 
-            # 'supplier', 
             'parts_name', 
             'parts_number', 
             'sell_price',
-            # 'buy_price'
         ])
         
+        rf_project = read_frame(Project.objects.all(), fieldnames=[
+            'prj_code',
+            'customer'
+        ])
+        
+   
+        
         data1 = pd.merge(
-            rf_shipment.sort_values('shipped_date'), 
+            rf_shipment, 
             rf_item, 
             on='item_code', 
             how='left'
             )
       
+        data1 = pd.merge(data1.sort_values('shipped_date'), rf_project, on='prj_code', how='inner')
         
         data2 = data1
         
@@ -1102,8 +1149,14 @@ class ItemInfoView(View, LoginRequiredMixin):
         input_parts_num = request.GET.get('partsNumber', None) 
 
         rf_item = read_frame(Item.objects.all())
-        data1 = rf_item
         
+        rf_project = read_frame(Project.objects.all(), fieldnames=[
+            'prj_code',
+            'customer'
+        ])
+
+        data1 = pd.merge(rf_item, rf_project, on='prj_code', how='inner')
+            
         data1['amount'] = data1['stock'] * data1['buy_price']
         
         
@@ -1219,24 +1272,34 @@ class ItemInfoView(View, LoginRequiredMixin):
 
 class ItemCreateView(View, LoginRequiredMixin):
     def get(self,request):
-        return render(request, 'omsapp/item_create.html')
+        sell_cur_list = Currency_S.objects.all()
+        buy_cur_list = Currency_B.objects.all()
+        
+        context = {'sell_cur_list':sell_cur_list, 'buy_cur_list':buy_cur_list}
+        return render(request, 'omsapp/item_create.html', context)
     
     def post(self, request):
         input_prj_code = request.POST.get('prjCode', None)
-        input_customer_code = request.POST.get('customer', None)
         input_supplier_code = request.POST.get('supplier', None)
         input_parts_name = request.POST.get('partsName', None)
         input_parts_number = request.POST.get('partsNum', None)
         input_sell_price = request.POST.get('sellPrice', None)
         input_buy_price = request.POST.get('buyPrice', None)
         
+        input_sell_cur = request.POST.get('sellCur', None)
+        input_buy_cur = request.POST.get('buyCur', None)
+        
+        sell_cur = Currency_S.objects.get(currency=input_sell_cur)
+        buy_cur = Currency_B.objects.get(currency=input_buy_cur)
+        
         new_item = Item.objects.create(
             prj_code = Project.objects.get(prj_code=input_prj_code),
-            customer = Customer.objects.get(customer_code=input_customer_code),
             supplier = Supplier.objects.get(supplier_code=input_supplier_code),
             parts_name = input_parts_name,
             parts_number = input_parts_number,
+            sell_price_cur = sell_cur,
             sell_price = input_sell_price,
+            buy_price_cur = buy_cur,
             buy_price = input_buy_price
         )
         
