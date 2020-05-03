@@ -6,7 +6,7 @@ from django.views.generic import (
     DetailView,
     UpdateView
 )
-from omsapp.models import Order, Item, OrderNumber, Order, Project, User, Shipment, Acceptance
+from omsapp.models import Order, Item, OrderNumber, Order, Project, User, Shipment, Acceptance, Customer, Supplier
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from django.urls import reverse_lazy
@@ -656,6 +656,7 @@ class OrderInfoView(View, LoginRequiredMixin):
             print('13')
             return render(request, 'omsapp/order_info.html',context)
 
+### Acceptance Info ########################### 
 class AcceptanceInfoView(View, LoginRequiredMixin):
     def get(self, request):   
         input_prj_code = request.GET.get('prjCode', None)
@@ -874,6 +875,7 @@ class AcceptanceInfoView(View, LoginRequiredMixin):
             print('13')      
             return render(request, 'omsapp/acceptance_info.html',context)
 
+### Shipment Info ########################### 
 class ShipmentInfoView(View, LoginRequiredMixin):
     def get(self, request):   
         input_prj_code = request.GET.get('prjCode', None)
@@ -1092,7 +1094,8 @@ class ShipmentInfoView(View, LoginRequiredMixin):
             print('13')      
             return render(request, 'omsapp/shipment_info.html',context)
 
-class InventoryInfoView(View, LoginRequiredMixin):
+### Inventory Info ########################### 
+class ItemInfoView(View, LoginRequiredMixin):
     def get(self, request):
         input_prj_code = request.GET.get('prjCode', None)
         input_item_code = request.GET.get('itemCode', None)
@@ -1116,7 +1119,7 @@ class InventoryInfoView(View, LoginRequiredMixin):
                 'parts_num':input_parts_num
                 }
             print('1')
-            return render(request, 'omsapp/inventory_info.html', context)
+            return render(request, 'omsapp/item_info.html', context)
 
         # 2. Item Code
         elif input_prj_code == "" and input_item_code != "" and input_parts_num == "":
@@ -1128,7 +1131,7 @@ class InventoryInfoView(View, LoginRequiredMixin):
                 'parts_num':input_parts_num
                 }
             print('2')
-            return render(request, 'omsapp/inventory_info.html', context)
+            return render(request, 'omsapp/item_info.html', context)
             
         # 3. P/N
         elif input_prj_code == "" and input_item_code == "" and input_parts_num != "":
@@ -1140,7 +1143,7 @@ class InventoryInfoView(View, LoginRequiredMixin):
                 'parts_num':input_parts_num
                 }
             print('3')
-            return render(request, 'omsapp/inventory_info.html', context)
+            return render(request, 'omsapp/item_info.html', context)
             
         # 4. Prj Code & Item Code
         elif input_prj_code != "" and input_item_code != "" and input_parts_num == "":
@@ -1153,7 +1156,7 @@ class InventoryInfoView(View, LoginRequiredMixin):
                 'parts_num':input_parts_num
                 }
             print('4')
-            return render(request, 'omsapp/inventory_info.html', context)
+            return render(request, 'omsapp/item_info.html', context)
             
         # 5. Prj Code & P/N
         elif input_prj_code != "" and input_item_code == "" and input_parts_num != "":
@@ -1166,7 +1169,7 @@ class InventoryInfoView(View, LoginRequiredMixin):
                 'parts_num':input_parts_num
                 }
             print('5')
-            return render(request, 'omsapp/inventory_info.html', context)
+            return render(request, 'omsapp/item_info.html', context)
         
         # 6. Item Code & P/N
         elif input_prj_code == "" and input_item_code != "" and input_parts_num != "":
@@ -1179,7 +1182,7 @@ class InventoryInfoView(View, LoginRequiredMixin):
                 'parts_num':input_parts_num
                 }
             print('6')
-            return render(request, 'omsapp/inventory_info.html', context)
+            return render(request, 'omsapp/item_info.html', context)
             
         # 7. No Input()
         elif input_prj_code == "" and input_item_code == "" and input_parts_num == "":
@@ -1191,12 +1194,12 @@ class InventoryInfoView(View, LoginRequiredMixin):
                 'parts_num':input_parts_num
                 }
             print('7')
-            return render(request, 'omsapp/inventory_info.html', context)
+            return render(request, 'omsapp/item_info.html', context)
             
         # 8. default()
         elif input_prj_code is None and input_item_code is None and input_parts_num is None : 
             print('8')
-            return render(request, 'omsapp/inventory_info.html')
+            return render(request, 'omsapp/item_info.html')
     
         # 9. All Input()
         else:
@@ -1210,7 +1213,73 @@ class InventoryInfoView(View, LoginRequiredMixin):
                 'parts_num':input_parts_num
                 }
             print('9')
-            return render(request, 'omsapp/inventory_info.html', context)
+            return render(request, 'omsapp/item_info.html', context)
             
 
+
+class ItemCreateView(View, LoginRequiredMixin):
+    def get(self,request):
+        return render(request, 'omsapp/item_create.html')
+    
+    def post(self, request):
+        input_prj_code = request.POST.get('prjCode', None)
+        input_customer_code = request.POST.get('customer', None)
+        input_supplier_code = request.POST.get('supplier', None)
+        input_parts_name = request.POST.get('partsName', None)
+        input_parts_number = request.POST.get('partsNum', None)
+        input_sell_price = request.POST.get('sellPrice', None)
+        input_buy_price = request.POST.get('buyPrice', None)
+        
+        new_item = Item.objects.create(
+            prj_code = Project.objects.get(prj_code=input_prj_code),
+            customer = Customer.objects.get(customer_code=input_customer_code),
+            supplier = Supplier.objects.get(supplier_code=input_supplier_code),
+            parts_name = input_parts_name,
+            parts_number = input_parts_number,
+            sell_price = input_sell_price,
+            buy_price = input_buy_price
+        )
+        
+        new_item_code = Item.objects.latest('item_code').item_code
+        print(new_item_code)
+        new_item = read_frame(Item.objects.filter(item_code=new_item_code))
+        print(new_item)
+        data1 = new_item.to_dict()
+        
+        return JsonResponse({'new_item':data1}, status=200)
+
+
+class ItemUpdateView(View, LoginRequiredMixin):
+    def get(self,request):
+        item_id = request.GET.get('dataId', None)
+        update_item = Item.objects.get(id=item_id)
+        
+        return JsonResponse({'item':model_to_dict(update_item)}, status=200)
+    
+    def post(self,request):
+        item_id = request.POST.get('itemId', None)
+        sell_price = request.POST.get('sellPrice', None)
+        buy_price = request.POST.get('buyPrice', None)
+        delete_check = request.POST.get('deleteCheckNum', None)
+        update_item = Item.objects.get(id=item_id)
+        
+        print(item_id)
+        print(sell_price)
+        print(buy_price)
+        print(delete_check)
+        print(update_item)
+        
+        if delete_check == "0":  #update 
+            update_item.sell_price=sell_price
+            update_item.buy_price=buy_price
+            update_item.save()
+            return JsonResponse({'result':model_to_dict(update_item)}, status=200)
             
+        elif delete_check == "1": #delete
+            update_item.delete()
+            return JsonResponse({'result':True}, status=200)
+            
+            
+            
+        
+    
