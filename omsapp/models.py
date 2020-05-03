@@ -143,8 +143,14 @@ class Project(models.Model):
         return self.prj_code
     
 
+def get_next():
+    try:
+        return int(Item.objects.latest('item_code').item_code) + 1
+    except Item.DoesNotExist:
+        return 10000
+
 class Item(models.Model):
-    item_code = models.CharField(max_length=5, unique=True)
+    item_code = models.IntegerField(unique=True,default=get_next)
     prj_code = models.ForeignKey(Project, on_delete=models.PROTECT)
     customer = models.ForeignKey(Customer, on_delete=models.PROTECT)
     supplier = models.ForeignKey(Supplier, on_delete=models.PROTECT)
@@ -155,7 +161,7 @@ class Item(models.Model):
     date_created = models.DateTimeField(default=datetime.now)
     stock = models.IntegerField(default=0)
     def __str__(self):
-        return self.item_code
+        return str(self.item_code)
 
 class OrderNumber(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

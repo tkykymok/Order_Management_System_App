@@ -42,8 +42,8 @@
                     <th>Item Code</th>
                     <th>Description</th>
                     <th>Maker P/N</th>
-                    <th>B/P</th>
                     <th>S/P</th>
+                    <th>B/P</th>
                     <th>Ordered</th>
                     <th>Shipped</th>
                     <th>Accepted</th>
@@ -66,8 +66,8 @@
                     <td>{{ row.item_code }}</td>
                     <td>{{ row.parts_name }}</td>
                     <td>{{ row.parts_number }}</td>
-                    <td>¥{{ row.buy_price }}</td>
-                    <td>¥{{ row.sell_price }}</td>
+                    <td>{{ row.sell_price }}</td>
+                    <td>{{ row.buy_price }}</td>
                     <td id="qty-{{row.id}}">{{ row.quantity | intcomma }}</td>
                     <td>{{ row.shipment_qty | intcomma }}</td>
                     <td>{{ row.acceptance_qty | intcomma }}</td>

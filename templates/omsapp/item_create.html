@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+
+<div class="container-fruid px-5">
+    <div class="ml-2 mt-3 mb-3"><h2>Item Create</h2></div>
+        <div class="row mb-2">
+            <div class="col-12">
+                <form id="itemCreateForm" action="" method="POST" width="100%"> {% csrf_token %}
+                    <table id="itemCreateTable" class="table table-bordered bg-light"  width="100">
+                        <thead>
+                            <tr class="text-center">
+                                <th>Item Code</th>
+                                <th>PRJ Code</th>
+                                <th>Customer</th>
+                                <th>Supplier</th>
+                                <th>Description</th>
+                                <th>Maker P/N</th>
+                                <th>S/P</th>
+                                <th>B/P</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><input id="itemCode" class="form-control" type="text" name="itemCode" maxlength="5" readonly=True></td>
+                                <td><input id="prjCode" class="form-control" type="text" name="prjCode" maxlength="4"></td>
+                                <td><input id="customer" class="form-control" type="text" name="customer" maxlength="5"></td>
+                                <td><input id="supplier" class="form-control" type="text" name="supplier" maxlength="5"></td>
+                                <td><input id="partsName" class="form-control" type="text" name="partsName" maxlength=""></td>
+                                <td><input id="partsNum" class="form-control" type="text" name="partsNum" maxlength=""></td>
+                                <td><input id="sellPrice" class="form-control" type="text" name="sellPrice" maxlength=""></td>
+                                <td><input id="buyPrice" class="form-control" type="text" name="buyPrice" maxlength=""></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </form>
+            </div>
+            <div class="col bottom-btn">
+                <div class="col-1 float-right ">
+                    <button id="itemCreateConfirm" type="button" class="btn btn-primary btn-block ">Confirm</button>
+                </div>       
+                <div class="col-1 float-right">
+                    <button id="cancel" type="button" class="btn btn-dark btn-block mr-3 ">Cnacel</button>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <span id="message">New Item was succesfully created!</span>
+                <table id="createdItemTable" class="table table-bordered bg-light"  width="100%">
+                    <thead id="createdItemTh">
+                        <tr class="text-center">
+                            <th>Item Code</th>
+                            <th>PRJ Code</th>
+                            <th>Customer</th>
+                            <th>Supplier</th>
+                            <th>Description</th>
+                            <th>Maker P/N</th>
+                            <th>S/P</th>
+                            <th>B/P</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+</div>
+
+{% endblock %}

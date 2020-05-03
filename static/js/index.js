@@ -1,10 +1,10 @@
 // let csrfToken = $('input[name=csrfmiddlewaretoken]').val();
 $(document).ready(function () {
 
-// Common Function ////////////////////////////////////////////////////////////////////////////////////
+    // Common Function ////////////////////////////////////////////////////////////////////////////////////
     var csrfToken = $('input[name=csrfmiddlewaretoken]').val();
     // date validation ---------------------
-    function dateValidation(date,next) {
+    function dateValidation(date, next) {
         if (date.val().length === 8) {
             let year = date.val().slice(0, 4);
             let month = date.val().slice(4, 6);
@@ -12,7 +12,7 @@ $(document).ready(function () {
             let validated = `${year}-${month}-${day}`;
             date.val(validated);
             next.focus();
-        } else if (date.val().length > 8){
+        } else if (date.val().length > 8) {
             date.val('')
         } else {
             return false
@@ -24,19 +24,19 @@ $(document).ready(function () {
     console.log(mode);
 
     function modeBlock() {
-        $('#chkbox1').prop('disabled',true)
-        $('#chkbox2').prop('disabled',true)
-        $('#chkbox3').prop('disabled',true)
+        $('#chkbox1').prop('disabled', true)
+        $('#chkbox2').prop('disabled', true)
+        $('#chkbox3').prop('disabled', true)
     }
 
     function btnShowUp() {
-        $('.confirm-btn').css('display','block')
-        $('.cancel-btn').css('display','block')
+        $('.confirm-btn').css('display', 'block')
+        $('.cancel-btn').css('display', 'block')
     }
     
     function btnShowUp2() {
-        $('#lineAdd').css('display','block');
-        $('#lineDelete').css('display','block');
+        $('#lineAdd').css('display', 'block');
+        $('#lineDelete').css('display', 'block');
     }
 
     function deleteCheck() {
@@ -53,10 +53,10 @@ $(document).ready(function () {
     }
 
     //"Check Box" -------------------------
-    $('#chkbox1').on('click', function () { 
-        if ($('#chkbox2').prop('checked') === true || $('#chkbox3').prop('checked')===true ) {
-            $('#chkbox2').prop('checked', false); 
-            $('#chkbox3').prop('checked', false); 
+    $('#chkbox1').on('click', function () {
+        if ($('#chkbox2').prop('checked') === true || $('#chkbox3').prop('checked') === true) {
+            $('#chkbox2').prop('checked', false);
+            $('#chkbox3').prop('checked', false);
             $('#prjCode').prop('readonly', false);
             $('#suppDate').prop('readonly', false);
             $('#custDate').prop('readonly', false);
@@ -68,10 +68,10 @@ $(document).ready(function () {
         }
     });
 
-    $('#chkbox2').on('click', function () { 
-        if ($('#chkbox1').prop('checked') === true || $('#chkbox3').prop('checked')===true ) {
-            $('#chkbox1').prop('checked', false); 
-            $('#chkbox3').prop('checked', false); 
+    $('#chkbox2').on('click', function () {
+        if ($('#chkbox1').prop('checked') === true || $('#chkbox3').prop('checked') === true) {
+            $('#chkbox1').prop('checked', false);
+            $('#chkbox3').prop('checked', false);
             $('#prjCode').prop('readonly', true);
             $('#suppDate').prop('readonly', true);
             $('#custDate').prop('readonly', true);
@@ -83,10 +83,10 @@ $(document).ready(function () {
         }
     });
 
-    $('#chkbox3').on('click', function () { 
-        if ($('#chkbox1').prop('checked') === true || $('#chkbox2').prop('checked')===true ) {
-            $('#chkbox1').prop('checked', false); 
-            $('#chkbox2').prop('checked', false); 
+    $('#chkbox3').on('click', function () {
+        if ($('#chkbox1').prop('checked') === true || $('#chkbox2').prop('checked') === true) {
+            $('#chkbox1').prop('checked', false);
+            $('#chkbox2').prop('checked', false);
             $('#prjCode').prop('readonly', true);
             $('#suppDate').prop('readonly', true);
             $('#custDate').prop('readonly', true);
@@ -98,7 +98,7 @@ $(document).ready(function () {
         }
     });
     
-    $('input[name="chkbox"]').on('click', function () { 
+    $('input[name="chkbox"]').on('click', function () {
         mode = $(this).val();
         console.log(mode);
     });
@@ -106,7 +106,7 @@ $(document).ready(function () {
     // "Item Info Get / Order Create" ------
     function itemInfoGet(item, suppDate, custDate, pName, pNo, sp, bp, qty) {
         let suppDelDate = $('#suppDate').val();
-        let custDelDate = $('#custDate').val(); 
+        let custDelDate = $('#custDate').val();
         $.ajax({
             url: '/item-info-get/',
             type: 'post',
@@ -137,18 +137,18 @@ $(document).ready(function () {
     
     // new Line add ------------------------
     function newLineAdd(n) {
-        for (let i = 0; i < 5; i++){
+        for (let i = 0; i < 5; i++) {
             $("#orderCreateTable > tbody:last-child").append(`
-            <tr id="${n+i}" >
+            <tr id="${n + i}" >
                 <td class="delete-check-box"><input id="deleteCheck-${i}" class="check-box" type="checkbox" name="deleteCheck" value="${i}" maxlength="5"></td>
-                <td><input id="item-${n+i}" class="form-control" type="text" name="item" data-id="${n+i}" maxlength="5"></td>
-                <td><input id="suppDate-${n+i}" class="form-control" type="text" name="suppDate" maxlength="10" readonly=True></td>
-                <td><input id="custDate-${n+i}" class="form-control" type="text" name="custDate" maxlength="10" readonly=True></td>
-                <td><input id="pName-${n+i}" class="form-control form-control" type="text" readonly=True></td>
-                <td><input id="pNo-${n+i}" class="form-control" type="text" readonly=True></td>
-                <td><input id="sp-${n+i}" class="form-control" type="text" readonly=True></td>
-                <td><input id="bp-${n+i}" class="form-control" type="text" readonly=True></td>
-                <td><input id="qty-${n+i}" class="form-control"  type="text" name="qty" data-id="${n+i}"></th>
+                <td><input id="item-${n + i}" class="form-control" type="text" name="item" data-id="${n + i}" maxlength="5"></td>
+                <td><input id="suppDate-${n + i}" class="form-control" type="text" name="suppDate" maxlength="10" readonly=True></td>
+                <td><input id="custDate-${n + i}" class="form-control" type="text" name="custDate" maxlength="10" readonly=True></td>
+                <td><input id="pName-${n + i}" class="form-control form-control" type="text" readonly=True></td>
+                <td><input id="pNo-${n + i}" class="form-control" type="text" readonly=True></td>
+                <td><input id="sp-${n + i}" class="form-control" type="text" readonly=True></td>
+                <td><input id="bp-${n + i}" class="form-control" type="text" readonly=True></td>
+                <td><input id="qty-${n + i}" class="form-control"  type="text" name="qty" data-id="${n + i}"></th>
             </tr>
             `);
         }
@@ -170,13 +170,13 @@ $(document).ready(function () {
         if (!confirm('Are you sure you want to Cancel?')) {
             return false;
         } else {
-            location.reload(); 
+            location.reload();
         }
     });
 
 
 
-// Order ////////////////////////////////////////////////////////////////////////////////////
+    // Order ////////////////////////////////////////////////////////////////////////////////////
     //"inputOrderNumber" ---------------------------
     $('#orderNumber').keypress(function (event) {
         if (event.keyCode === 13) {
@@ -285,7 +285,7 @@ $(document).ready(function () {
                                     alert("error");
                                 }
                             });
-                        }    
+                        }
                     });
                 },
                 error: function () {
@@ -309,10 +309,10 @@ $(document).ready(function () {
                 type: 'post',
                 dataType: 'json',
                 success: function (response) {
-                    var customerCode = response.customer_info.customer_code 
+                    var customerCode = response.customer_info.customer_code
                     var customerName = response.customer_info.name
                     var personIncharge = response.person_incharge.username
-                    $('#customer').val(customerCode + '/' + customerName )
+                    $('#customer').val(customerCode + '/' + customerName)
                     $('#pic').val(personIncharge)
                     $('input[name="suppDelDate"]').focus();
                     $('#prjCode').prop("disabled", true);
@@ -325,7 +325,7 @@ $(document).ready(function () {
     });
 
     // suppDelDate Validation -----------------------------
-    $('input[name="suppDelDate"]').on('input',function (event) {
+    $('input[name="suppDelDate"]').on('input', function (event) {
         let date1 = $('input[name="suppDelDate"]');
         let next1 = $('input[name="custDelDate"]');
         dateValidation(date1, next1);
@@ -333,7 +333,7 @@ $(document).ready(function () {
     
     });
     // custDelDate Validation -----------------------------
-    $('input[name="custDelDate"]').on('input',function (event) {
+    $('input[name="custDelDate"]').on('input', function (event) {
         let date2 = $('input[name="custDelDate"]');
         let next2 = $('#enter1');
         dateValidation(date2, next2);
@@ -383,7 +383,7 @@ $(document).ready(function () {
                             <th>QTY</th>
                         </tr>
                         `)
-                        for (let i = 0; i < dataLength; i++){
+                        for (let i = 0; i < dataLength; i++) {
                             $("#orderCreateTable > tbody:last-child").append(`
                             <tr id=${i}>
                                 <input id="order-${i}"  type="hidden" name="orderId"  maxlength="5">
@@ -421,27 +421,27 @@ $(document).ready(function () {
     
                         // "Order update confirm" ---------------------------
                         $('#confirm').click(function () {
-                                let serializedData = $('#orderContentForm').serialize();
-                                if (!confirm('Do you Update Order?')) {
-                                    return false;
-                                } else {
-                                    $.ajax({
-                                        url: '/order-update-confirm/',
-                                        type: 'post',
-                                        data: serializedData,
-                                        dataType: 'json',
-                                        success: function (response) {
-                                            if (response.result) {
-                                                location.reload();
-                                            } else {
-                                                alert("This order cannot be changed");
-                                            }
-                                        },
-                                        error: function () {
-                                            alert("error");
+                            let serializedData = $('#orderContentForm').serialize();
+                            if (!confirm('Do you Update Order?')) {
+                                return false;
+                            } else {
+                                $.ajax({
+                                    url: '/order-update-confirm/',
+                                    type: 'post',
+                                    data: serializedData,
+                                    dataType: 'json',
+                                    success: function (response) {
+                                        if (response.result) {
+                                            location.reload();
+                                        } else {
+                                            alert("This order cannot be changed");
                                         }
-                                    });
-                                }    
+                                    },
+                                    error: function () {
+                                        alert("error");
+                                    }
+                                });
+                            }
                         });
                     }
                 },
@@ -492,7 +492,7 @@ $(document).ready(function () {
                         </tr>
                         `)
 
-                        for (let i = 0; i < dataLength; i++){
+                        for (let i = 0; i < dataLength; i++) {
                             $("#orderCreateTable > tbody:last-child").append(`
                             <tr id=${i}>
                                 <input id="order-${i}"  type="hidden" name="orderId"  maxlength="5">
@@ -532,25 +532,25 @@ $(document).ready(function () {
                         });
                         // "Order Delete confirm" ---------------------------
                         $('#confirm').click(function () {
-                                if (!confirm('Do you Delete Checked Order?')) {
-                                    return false;
-                                } else {
-                                    let serializedData = $('#orderContentForm').serialize();
-                                    $.ajax({
-                                        url: '/order-delete-confirm/',
-                                        type: 'post',
-                                        data: serializedData,
-                                        dataType: 'json',
-                                        success: function (response) {
-                                            if (response.result) {
-                                                location.reload();
-                                            }
-                                        },
-                                        error: function () {
-                                            alert("error");
+                            if (!confirm('Do you Delete Checked Order?')) {
+                                return false;
+                            } else {
+                                let serializedData = $('#orderContentForm').serialize();
+                                $.ajax({
+                                    url: '/order-delete-confirm/',
+                                    type: 'post',
+                                    data: serializedData,
+                                    dataType: 'json',
+                                    success: function (response) {
+                                        if (response.result) {
+                                            location.reload();
                                         }
-                                    });
-                                }    
+                                    },
+                                    error: function () {
+                                        alert("error");
+                                    }
+                                });
+                            }
                         });
                     }
                 },
@@ -562,24 +562,24 @@ $(document).ready(function () {
     });
     
 
-// Shipment ////////////////////////////////////////////////////////////////////////////////////
+    // Shipment ////////////////////////////////////////////////////////////////////////////////////
     $('#shipOrderNumber').keypress(function (event) {
         if (event.keyCode === 13) {
-            if (mode === "1") {        
+            if (mode === "1") {
                 $('#shipDate').focus();
-                $('#shipDate').on('input',function (event) {
+                $('#shipDate').on('input', function (event) {
                     let shipDate = $('input[name="shipDate"]');
                     let next3 = $('#enter2');
                     dateValidation(shipDate, next3);
-                });        
-            } else if (mode === "2" || mode === "3") {       
+                });
+            } else if (mode === "2" || mode === "3") {
                 $('#orderId').focus();
                 $('#orderId').keypress(function (event) {
                     if (event.keyCode === 13) {
                         $('#enter2').focus();
                     }
                 });
-            } 
+            }
         }
     });
     
@@ -751,7 +751,7 @@ $(document).ready(function () {
                         $('input[name="shipQty"]').on('focus', function () {
                             let dataId = $(this).data('id')
                             $(`#shipQty-${dataId}`).on('input', function () {
-                                if ( parseInt(response.shipment_list.shipment_qty[dataId]) < parseInt($(`#shipQty-${dataId}`).val())) {
+                                if (parseInt(response.shipment_list.shipment_qty[dataId]) < parseInt($(`#shipQty-${dataId}`).val())) {
                                     alert("Changed Qty must be less than Original Qty.");
                                     $(this).val("");
                                 } else {
@@ -856,7 +856,7 @@ $(document).ready(function () {
     // Shipment Confirm --------------------
     $('#shipConfirm').click(function () {
         if (mode === "1") {
-            let serializedData = $('#shipmentEntryForm').serialize();        
+            let serializedData = $('#shipmentEntryForm').serialize();
             if (!confirm('Do you Proceed?')) {
                 return false;
             } else {
@@ -873,10 +873,10 @@ $(document).ready(function () {
                     error: function () {
                         alert("error");
                     }
-                });  
-            }  
+                });
+            }
         } else if (mode === "2") {
-            let serializedData = $('#shipmentEntryForm').serialize();        
+            let serializedData = $('#shipmentEntryForm').serialize();
             if (!confirm('Do you Proceed?')) {
                 return false;
             } else {
@@ -893,9 +893,9 @@ $(document).ready(function () {
                     error: function () {
                         alert("error");
                     }
-                });  
-            }  
-        } else if (mode === "3") {       
+                });
+            }
+        } else if (mode === "3") {
             if (!confirm('Do you Delete Checked Line?')) {
                 return false;
             } else {
@@ -914,30 +914,30 @@ $(document).ready(function () {
                         alert("error");
                     }
                 });
-            }   
+            }
         }
     });
     // -------------------------------------
 
 
-// Acceptance ////////////////////////////////////////////////////////////////////////////////////
+    // Acceptance ////////////////////////////////////////////////////////////////////////////////////
     $('#acceptOrderNumber').keypress(function (event) {
         if (event.keyCode === 13) {
-            if (mode === "1") {        
+            if (mode === "1") {
                 $('#acceptDate').focus();
-                $('#acceptDate').on('input',function (event) {
+                $('#acceptDate').on('input', function (event) {
                     let acceptDate = $('input[name="acceptDate"]');
                     let next = $('#enter4');
                     dateValidation(acceptDate, next);
-                });        
-            } else if (mode === "2" || mode === "3") {    
+                });
+            } else if (mode === "2" || mode === "3") {
                 $('#orderId').focus();
                 $('#orderId').keypress(function (event) {
                     if (event.keyCode === 13) {
                         $('#enter4').focus();
                     }
                 });
-            } 
+            }
         }
     });
 
@@ -1117,7 +1117,7 @@ $(document).ready(function () {
                                 let acceptedQty = parseInt(response.acceptance_list.acceptance_qty[dataId]);
                                 let poBal = parseInt(response.acceptance_list.balance[dataId]);
                                 let changedQty = parseInt($(`#acceptQty-${dataId}`).val());
-                                if ( acceptedQty < changedQty) {
+                                if (acceptedQty < changedQty) {
                                     if ((poBal + acceptedQty) < changedQty) {
                                         alert("Changed Qty must be less than remaining PO Bal.");
                                         $(this).val("");
@@ -1167,7 +1167,7 @@ $(document).ready(function () {
                     let dataLength = Object.keys(response.acceptance_list.id_x).length;
                     $('#acceptPrjCode').val(response.acceptance_list.prj_code[0]);
                     if (dataLength === 0) {
-                        alert("Please input valid Order ID. Acceptance Data Does not exist"); 
+                        alert("Please input valid Order ID. Acceptance Data Does not exist");
                     } else if (response.acceptance_list.order_number[0] != acceptOrderNumber) {
                         alert("Input Order No and ID does not match.");
                     } else {
@@ -1229,7 +1229,7 @@ $(document).ready(function () {
     // Acceptance Confirm --------------------
     $('#acceptConfirm').click(function () {
         if (mode === "1") {
-            let serializedData = $('#acceptanceEntryForm').serialize();        
+            let serializedData = $('#acceptanceEntryForm').serialize();
             if (!confirm('Do you Proceed?')) {
                 return false;
             } else {
@@ -1246,10 +1246,10 @@ $(document).ready(function () {
                     error: function () {
                         alert("error");
                     }
-                });  
+                });
             }
         } else if (mode === "2") {
-            let serializedData = $('#acceptanceEntryForm').serialize();        
+            let serializedData = $('#acceptanceEntryForm').serialize();
             if (!confirm('Do you Proceed?')) {
                 return false;
             } else {
@@ -1266,8 +1266,8 @@ $(document).ready(function () {
                     error: function () {
                         alert("error");
                     }
-                });  
-            }              
+                });
+            }
         } else if (mode === "3") {
             if (!confirm('Do you Delete Checked Line?')) {
                 return false;
@@ -1287,190 +1287,146 @@ $(document).ready(function () {
                         alert("error");
                     }
                 });
-            }  
+            }
         }
     });
     // -------------------------------------
 
-// Order Info ////////////////////////////////////////////////////////////////////////////////////
+    // Order Info ////////////////////////////////////////////////////////////////////////////////////
     // Sorting Order Information ------------
     $('#dateS').on('input', function (event) {
         let date = $('#dateS');
         let next = $('#dateE');
-        dateValidation(date, next);          
+        dateValidation(date, next);
     });
     
-    $('#dateE').on('input',function (event) {
+    $('#dateE').on('input', function (event) {
         let date = $('#dateE');
         let next = $('#enter3');
         dateValidation(date, next);
     });
 
-});
-
-
-
-    /*
-    // "Order Confirm modal" 停止---------------------------
-    $('#create').click(function () {
-        let item, qty, suppDate, custDate
-        let order = {}; 
-        for (i = 1; i <= 5; i++) {
-            if ($(`#item-${i}`).val() !== "" && $(`#qty-${i}`).val() !== "") {
-                item = $(`#item-${i}`).val();
-                qty = $(`#qty-${i}`).val();
-                suppDate = $(`#suppDate-${i}`).val();
-                custDate = $(`#custDate-${i}`).val();
-                order[i] = [item, qty, suppDate, custDate];
-                
-                $("#orderConfirmTable > tbody:last-child").append(`
-                    <tr>
-                        <td width="20%">${item}</td>
-                        <td width="20%">${qty}</td>
-                        <td width="30%">${suppDate}</td>
-                        <td width="30%">${custDate}</td>
-                    </tr>
-                `);
-            } else if (Object.keys(order).length === 0){
-                $("#orderConfirmTable > tbody:last-child").append(`
-                <tr>
-                    <td width="20%">No Order</td>
-                    <td width="20%">No Order</td>
-                    <td width="30%">No Order</td>
-                    <td width="30%">No Order</td>
-                </tr>
-                 `);
-                break
-            } else {
-                break
-            }
-        }
-        console.log(order);
-    });
-    */
-
-
-
-    /*
-    // modal close and modal content delete 停止
-    $('#close').click(function () {
-        $("#orderUpdateTable tbody").empty();
-    });
-    // modal close and modal content delete 停止
-    $('#close').click(function () {
-        $("#orderConfirmTable tbody").empty();
-    });
-    */
-
-
-
- /* 停止
-    // "Order Update " ---------------------------
-    $('button.update').click(function () {
-        console.log($('#form-delete').val());
-        let tr_id = $(this).data('id');
-        console.log(tr_id);
-        $.ajax({
-            url: `/order-update/${tr_id}/`,
-            type: 'get',
-            dataType: 'json',
-            success: function (response) {
-                console.log(response.cur_order);
-                $("#orderUpdateTable > tbody:last-child").append(`
-                
-                <tr>
-                    <td><input class="form-control" id="form-id" type="" name="formId" readonly=True/></td>
-                    <td><input id="form-suppDelDate" class="form-control" type="text" name="suppDelDate" /></td>
-                    <td><input id="form-custDelDate" class="form-control" type="text" name="custDelDate" /></td>
-                    <td><input id="form-qty" class="form-control" type="text" name="qty" /></td>
-                    <td><input id="form-delete" class="form-control" type="checkbox"  name="deleteCheck" value="0" /></td>
-                </tr>
-                `);
-                
-                $('#form-id').val(response.cur_order.id);
-                $('#form-suppDelDate').val(response.cur_order.supplier_delivery_date);
-                $('#form-custDelDate').val(response.cur_order.customer_delivery_date);
-                $('#form-qty').val(response.cur_order.quantity);
-            },
-            error: function () {
-                console.log("error");
-            }
-        });
-    });
-
-    // Save Change or Delete -------------------------
-    $('#updateConfirm').click(function () {      
-        // Delete--------------------------------------
-        if ($('#form-delete').val() === "1") {
-            if (!confirm('Are you sure you want to delete this Order?')) {
-                return false;
-            } else {
-                let tr_id = $('#form-id').val();
-                $.ajax({
-                    url: '/order-delete/',
-                    type: 'get',
-                    data: {
-                        'id': tr_id
-                    },
-                    dataType: 'json',
-                    success: function (data) {
-                        if (data.deleted) {
-                            $(`#orderListTable #order-${tr_id}`).remove();
-                        }
-                    },
-                    error: function () {
-                        alert("error");
-                    }
-                }); 
-            }
-        // Update Save----------------------------------
-        } else if ($('#form-delete').val() === "0") {
-            let serializedData = $('#orderUpdateForm').serialize();
+    // Item Create ////////////////////////////////////////////////////////////////////////////////////
+    $('#itemCreateConfirm').click(function () {
+        let serializedData = $('#itemCreateForm').serialize();
+   
+        let prjCode = $('#prjCode').val();
+        let customer = $('#customer').val();
+        let supplier = $('#supplier').val();
+        let partsName = $('#partsName').val();
+        let partsNum = $('#partsNum').val();
+        let sellPrice = $('#sellPrice').val();
+        let buyPrice = $('#buyPrice').val();
+        if (prjCode && customer && supplier && partsName && partsNum && sellPrice && buyPrice) {
             $.ajax({
-                url: '/order-info/',
-                type: 'post',
+                url: '/item-create/',
                 data: serializedData,
+                type: 'post',
                 dataType: 'json',
                 success: function (response) {
-                    // modified data reflected with red color
-                    dataId = response.new_order.id;
-                    let curSuppDelDate = $(`#suppDelDate-${dataId}`);
-                    let curCustDelDate = $(`#custDelDate-${dataId}`);
-                    let curQty = $(`#qty-${dataId}`);
-    
-                    let newSuppDelDate = response.new_order.supplier_delivery_date;
-                    let newCustDelDate = response.new_order.customer_delivery_date;
-                    let newQty = response.new_order.quantity;
-                    
-                    if (curSuppDelDate.text() !== newSuppDelDate) {
-                        curSuppDelDate.text(newSuppDelDate).addClass('changed');  
-                    }
-                    if (curCustDelDate.text() !== newCustDelDate) {
-                        curCustDelDate.text(newCustDelDate).addClass('changed');
-                    }
-                    if (curQty.text() !== newQty.toLocaleString()) {
-                        curQty.text(newQty.toLocaleString()).addClass('changed');
-                    } 
+                    console.log(response.new_item)
+                    $("#message").show();
+                    $("#createdItemTh").show();
+                    $("#createdItemTable > tbody:last-child").append(`
+                    <tr>
+                        <td><input class="form-control" type="text" name="itemCode" maxlength="5" value="${response.new_item.item_code[0]}" readonly=True></td>
+                        <td><input class="form-control" type="text" name="prjCode" maxlength="4" value="${response.new_item.prj_code[0]}" readonly=True></td>
+                        <td><input class="form-control" type="text" name="customer" maxlength="5" value="${response.new_item.customer[0]}" readonly=True></td>
+                        <td><input class="form-control" type="text" name="supplier" maxlength="5" value="${response.new_item.supplier[0]}" readonly=True></td>
+                        <td><input class="form-control" type="text" name="partsName" maxlength="" value="${response.new_item.parts_name[0]}" readonly=True></td>
+                        <td><input class="form-control" type="text" name="partsNum" maxlength="" value="${response.new_item.parts_number[0]}" readonly=True></td>
+                        <td><input class="form-control" type="text" name="sellPrice" maxlength="" value="${response.new_item.sell_price[0]}" readonly=True></td>
+                        <td><input class="form-control" type="text" name="buyPrice" maxlength="" value="${response.new_item.buy_price[0]}" readonly=True></td>
+                    </tr>
+                    `);
                 },
                 error: function () {
                     alert("error");
                 }
-            });    
-        } 
-        $("#orderUpdateTable tbody").empty();
-    });
-*/
-
-/* 停止
-// Delete CheckBox Value Check ---------
-$(function(){
-    $(document).on('change', '#form-delete', function () {
-        if ($(this).val() === "0") {
-            $(this).val("1")
+            });
+            
         } else {
-            $(this).val("0")
+            alert("Please fill in all required field.")
         }
-    }); 
+    });
+
+
+    // Item Update ////////////////////////////////////////////////////////////////////////////////////
+    $('.itemUpdate').click(function () {
+        let dataId = $(this).data('id');
+        $.ajax({
+            url: '/item-update/',
+            type: 'get',
+            data: {
+                'dataId': dataId
+            },
+            dataType: 'json',
+            success: function (response) {
+
+                    $("#itemUpdateTable > tbody:last-child").prepend(`
+                    <tr>
+                        <input type="hidden" name="itemId" value="${response.item.id}">
+                        <td><input type="text" class="form-control" name="itemCode" readonly=True value="${response.item.item_code}"></td>
+                        <td><input type="text" class="form-control" name="sellPrice" value="${response.item.sell_price}"></td>
+                        <td><input type="text" class="form-control" name="buyPrice" value="${response.item.buy_price}"></td>
+                        <td><input type="checkbox" class="form-control" name="deleteCheck" value="0"></td>
+                        <input id="deleteCheckNum" type="hidden"  name="deleteCheckNum" value="0">
+                    </tr>
+                    `);
+                $('input[name="deleteCheck"]').on('click', function () {
+                    if ($(this).val() === "0") {
+                        $(this).val("1")
+                        $(`#deleteCheckNum`).val("1")
+                    } else {
+                        $(this).val("0")
+                        $(`#deleteCheckNum`).val("0")
+                    }
+                });
+                $('#saveChanges').click(function () {
+                    let serializedData = $('#itemUpdateForm').serialize();
+                    $.ajax({
+                        url: '/item-update/',
+                        type: 'post',
+                        data: serializedData,
+                        dataType: 'json',
+                        success: function (response) {
+                            let originalSP = $('#itemInfoTable').find(`tr#item-${dataId} #sp-${dataId}`);
+                            let originalBP = $('#itemInfoTable').find(`tr#item-${dataId} #bp-${dataId}`);
+                            let updateSP = response.result.sell_price;
+                            let updateBP = response.result.buy_price;
+
+                            if (originalSP.text() != updateSP) {
+                                originalSP.text(updateSP);
+                                originalSP.css('color', 'red');
+                            }
+
+                            if (originalBP.text() != updateBP) {
+                                originalBP.text(updateBP);
+                                originalBP.css('color', 'red');
+                            }
+    
+                            $("#itemUpdateTable > tbody").children().remove();
+            
+                        },
+                        error: function () {
+                            alert("error");
+                        }
+                    });
+                });
+            },
+            error: function () {
+                alert("error");
+            }
+        });
+    });
+
+
+    $('#modalClose').click(function () {
+        $("#itemUpdateTable > tbody").children().remove();
+    });
+        
+    
+
+
 });
-//--------------------------------------
-*/
+

@@ -32,6 +32,9 @@ urlpatterns = [
     path('acceptance-info/', views.AcceptanceInfoView.as_view(), name='acceptance_info'),
     
     
-    path('inventory-info/', views.InventoryInfoView.as_view(), name='inventory_info'),
+    path('item-info/', views.ItemInfoView.as_view(), name='item_info'),
+    
+    path('item-create/', views.ItemCreateView.as_view(), name='item_create'),
+    path('item-update/', views.ItemUpdateView.as_view(), name='item_update'),
 
 ]

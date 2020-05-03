@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load utils %}
+
+{% block content %}
+
+<div class="container-fluid">
+    <div class="ml-2 mt-3 mb-3">
+        <h2>Item Information</h2>
+    </div>
+    <div class="row">
+        <div class="col-6">
+        <form id="" class="entry-form" method="GET"> 
+            <table id="" class="table table-sm bg-light table-bordered table-striped">
+                <tr>
+                    <th width="15%">PRJ Code</th>
+                    <th width="15%">Item Code</th>
+                    <th>Maker P/N</th>
+                    <th width="15%"></th>
+                    <th></th>
+                </tr>
+                <tr>
+                    <td><input id="sortPrjCode" class="form-control" type="text" name="prjCode" placeholder="" maxlength="4" value="{{prj_code}}"/></td>
+                    <td><input id="itemCode" class="form-control" type="text" name="itemCode" placeholder="" maxlength="5" value="{{item_code}}"/></td>
+                    <td><input id="partsNumber" class="form-control" type="text" name="partsNumber"  value="{{parts_num}}" /></td>
+                    <td></td>
+                    <td><button id="enter3" type="submit" class="btn btn-outline-dark btn-block">Enter</button></td>
+                </tr>
+            </table>
+        </form>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col">
+            <table id="itemInfoTable" class="table table-sm bg-light table-bordered table-striped">
+                <tr>
+                    <th>PRJ Code</th>
+                    <th>Item Code</th>
+                    <th>Customer</th>
+                    <th>Supplier</th>
+                    <th>Description</th>
+                    <th>Maker P/N</th>
+                    <th>S/P</th>
+                    <th>B/P</th>
+                    <th>Stock</th>
+                    <th>Stock Value(JPY)</th>
+                    <th width="5%"></th>
+                </tr>
+                
+                {% for index, row in item_list.iterrows %}
+                <tr id="item-{{row.id}}">
+                    <td>{{ row.prj_code }}</td>
+                    <td>{{ row.item_code }}</td>
+                    <td>{{ row.customer }}</td>
+                    <td>{{ row.supplier }}</td>
+                    <td>{{ row.parts_name }}</td>
+                    <td>{{ row.parts_number }}</td>
+                    <td id="sp-{{row.id}}">{{ row.sell_price }}</td>
+                    <td id="bp-{{row.id}}">{{ row.buy_price }}</td>
+                    <td>{{ row.stock | intcomma }}</td>
+                    <td>{{ row.amount | intcomma }}</td>
+                    <td><button class="btn-sm btn-success btn-block itemUpdate" data-toggle="modal" data-target="#staticBackdrop" data-id="{{row.id}}">Update</button></td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="staticBackdrop" data-backdrop="static" tabindex="-1" role="dialog" aria-labelledby="staticBackdropLabel " aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+                <form id="itemUpdateForm" action="" method="POST" width="100%"> {% csrf_token %}
+                    <table id="itemUpdateTable" class="table table-sm bg-light table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Item code</th>
+                                <th>S/P</th>
+                                <th>B/P</th>
+                                <th>Delete</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+    
+                        </tbody>
+                    </table>
+                </form>
+            </div>
+            <div class="modal-footer">
+              <button id="modalClose" type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              <button id="saveChanges" type="button" class="btn btn-primary" data-dismiss="modal">Save changes</button>
+            </div>
+          </div>    
+    </div>
+  </div>
+
+{% endblock %}
