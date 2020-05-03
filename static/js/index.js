@@ -313,7 +313,6 @@ $(document).ready(function () {
                     var customerName = response.customer_info.name
                     var personIncharge = response.person_incharge.username
                     $('#customer').val(customerCode + '/' + customerName)
-                    $('#pic').val(personIncharge)
                     $('input[name="suppDelDate"]').focus();
                     $('#prjCode').prop("disabled", true);
                 },
@@ -615,6 +614,7 @@ $(document).ready(function () {
                                     <td><input id="shipDate-${i}" class="form-control" type="text" name="shipDate2" maxlength="10"></td>
                                     <td><input id="shipPName-${i}" class="form-control form-control" type="text" readonly=True></td>
                                     <td><input id="shipPNo-${i}" class="form-control" type="text" readonly=True></td>
+                                    <td><input id="shipSpCur-${i}" class="form-control" type="text" readonly=True></td>
                                     <td><input id="shipSp-${i}" class="form-control" type="text" readonly=True></td>
                                     <td><input id="stock-${i}" class="form-control" type="text" readonly=True></td>
                                     <td><input id="shipQty-${i}" class="form-control"  type="text" name="shipQty" data-id="${i}"></td>
@@ -625,6 +625,7 @@ $(document).ready(function () {
                                 $(`#shipDate-${i}`).val($('#shipDate').val());
                                 $(`#shipPName-${i}`).val(response.ship_order_list.parts_name[i]);
                                 $(`#shipPNo-${i}`).val(response.ship_order_list.parts_number[i]);
+                                $(`#shipSpCur-${i}`).val(response.ship_order_list.sell_price_cur[i]);
                                 $(`#shipSp-${i}`).val(response.ship_order_list.sell_price[i]);
                                 $(`#stock-${i}`).val(response.ship_order_list.stock[i]);
                             }
@@ -644,13 +645,14 @@ $(document).ready(function () {
                             
                             $("#shipmentEntryTable > thead").prepend(`
                             <tr class="text-center">
-                                <th>Item Code</th>
-                                <th width="13%">Ship Date</th>
+                                <th width="10%">Item Code</th>
+                                <th width="15%">Ship Date</th>
                                 <th width="15%">Description</th>
                                 <th width="20%">Maker P/N</th>
-                                <th>S/P</th>
-                                <th>Stock</th>
-                                <th>Ship Qty</th>
+                                <th width="5%">CUR</th>
+                                <th width="10%">S/P</th>
+                                <th width="10%">Stock</th>
+                                <th width="10%">Ship Qty</th>
                             </tr>
                             `)
                         }
@@ -722,6 +724,7 @@ $(document).ready(function () {
                             <th width="13%">Ship Date</th>
                             <th width="15%">Description</th>
                             <th width="20%">Maker P/N</th>
+                            <th width="5%">CUR</th>
                             <th>S/P</th>
                             <th>Ship Qty</th>
                         </tr>
@@ -735,6 +738,7 @@ $(document).ready(function () {
                                 <td><input id="shipDate-${i}" class="form-control" type="text" name="shipDate2" maxlength="10"></td>
                                 <td><input id="shipPName-${i}" class="form-control form-control" type="text" readonly=True></td>
                                 <td><input id="shipPNo-${i}" class="form-control" type="text" readonly=True></td>
+                                <td><input id="shipSpCur-${i}" class="form-control" type="text" readonly=True></td>
                                 <td><input id="shipSp-${i}" class="form-control" type="text" readonly=True></td>
                                 <td><input id="shipQty-${i}" class="form-control"  type="text" name="shipQty" data-id="${i}"></td>
                             </tr>
@@ -745,6 +749,7 @@ $(document).ready(function () {
                             $(`#shipDate-${i}`).val(response.shipment_list.shipped_date[i])
                             $(`#shipPName-${i}`).val(response.shipment_list.parts_name[i]);
                             $(`#shipPNo-${i}`).val(response.shipment_list.parts_number[i]);
+                            $(`#shipSpCur-${i}`).val(response.shipment_list.sell_price_cur[i]);
                             $(`#shipSp-${i}`).val(response.shipment_list.sell_price[i]);
                             $(`#shipQty-${i}`).val(response.shipment_list.shipment_qty[i]);
                         }
@@ -814,6 +819,7 @@ $(document).ready(function () {
                             <th width="13%">Ship Date</th>
                             <th width="15%">Description</th>
                             <th width="20%">Maker P/N</th>
+                            <th width="5%">CUR</th>
                             <th>S/P</th>
                             <th>Ship Qty</th>
                         </tr>
@@ -829,6 +835,7 @@ $(document).ready(function () {
                                 <td><input id="shipDate-${i}" class="form-control" type="text" name="shipDate2" maxlength="10" readonly=True></td>
                                 <td><input id="shipPName-${i}" class="form-control form-control" type="text" readonly=True></td>
                                 <td><input id="shipPNo-${i}" class="form-control" type="text" readonly=True></td>
+                                <td><input id="shipSpCur-${i}" class="form-control" type="text" readonly=True></td>
                                 <td><input id="shipSp-${i}" class="form-control" type="text" readonly=True></td>
                                 <td><input id="shipQty-${i}" class="form-control"  type="text" name="shipQty" data-id="${i}" readonly=True></td>
                             </tr>
@@ -839,6 +846,7 @@ $(document).ready(function () {
                             $(`#shipDate-${i}`).val(response.shipment_list.shipped_date[i])
                             $(`#shipPName-${i}`).val(response.shipment_list.parts_name[i]);
                             $(`#shipPNo-${i}`).val(response.shipment_list.parts_number[i]);
+                            $(`#shipSpCur-${i}`).val(response.shipment_list.sell_price_cur[i]);
                             $(`#shipSp-${i}`).val(response.shipment_list.sell_price[i]);
                             $(`#shipQty-${i}`).val(response.shipment_list.shipment_qty[i]);
                         }
@@ -976,6 +984,7 @@ $(document).ready(function () {
                                     <td><input id="acceptDate-${i}" class="form-control" type="text" name="acceptDate2" maxlength="10"></td>
                                     <td><input id="acceptPName-${i}" class="form-control form-control" type="text" readonly=True></td>
                                     <td><input id="acceptPNo-${i}" class="form-control" type="text" readonly=True></td>
+                                    <td><input id="acceptBpCur-${i}" class="form-control" type="text" readonly=True></td>
                                     <td><input id="acceptBp-${i}" class="form-control" type="text" readonly=True></td>
                                     <td><input id="poBalance-${i}" class="form-control" type="text" readonly=True></td>
                                     <td><input id="acceptQty-${i}" class="form-control"  type="text" name="acceptQty" data-id="${i}"></td>
@@ -987,7 +996,8 @@ $(document).ready(function () {
                                 $(`#acceptDate-${i}`).val($('#acceptDate').val());
                                 $(`#acceptPName-${i}`).val(response.accept_order_list.parts_name[i]);
                                 $(`#acceptPNo-${i}`).val(response.accept_order_list.parts_number[i]);
-                                $(`#acceptBp-${i}`).val(response.accept_order_list.sell_price[i]);
+                                $(`#acceptBpCur-${i}`).val(response.accept_order_list.buy_price_cur[i]);
+                                $(`#acceptBp-${i}`).val(response.accept_order_list.buy_price[i]);
                                 $(`#poBalance-${i}`).val(response.accept_order_list.balance[i]);
                             }
                         }
@@ -1005,11 +1015,12 @@ $(document).ready(function () {
                             <tr class="text-center">
                                 <th width="10%">Item Code</th>
                                 <th width="15%">Supplier</th>
-                                <th width="13%">Accept Date</th>
+                                <th width="15%">Accept Date</th>
                                 <th width="15%">Description</th>
-                                <th width="20%">Maker P/N</th>
-                                <th>B/P</th>
-                                <th width="10%">PO Bal</th>
+                                <th width="15%">Maker P/N</th>
+                                <th width="5%">CUR</th>
+                                <th width="7%">B/P</th>
+                                <th width="8%">PO Bal</th>
                                 <th width="10%">Accept Qty</th>
                             </tr>
                             `)
@@ -1081,6 +1092,7 @@ $(document).ready(function () {
                             <th width="15%">Accept Date</th>
                             <th width="15%">Description</th>
                             <th width="15%">Maker P/N</th>
+                            <th width="5%">CUR</th>
                             <th width="10%">B/P</th>
                             <th width="10%">Accept Qty</th>
                         </tr>
@@ -1095,6 +1107,7 @@ $(document).ready(function () {
                                 <td><input id="acceptDate-${i}" class="form-control" type="text" name="acceptDate2" maxlength="10"></td>
                                 <td><input id="acceptPName-${i}" class="form-control form-control" type="text" readonly=True></td>
                                 <td><input id="acceptPNo-${i}" class="form-control" type="text" readonly=True></td>
+                                <td><input id="acceptBpCur-${i}" class="form-control" type="text" readonly=True></td>
                                 <td><input id="acceptBp-${i}" class="form-control" type="text" readonly=True></td>
                                 <td><input id="acceptQty-${i}" class="form-control"  type="text" name="acceptQty" data-id="${i}"></td>
                             </tr>
@@ -1106,6 +1119,7 @@ $(document).ready(function () {
                             $(`#acceptDate-${i}`).val(response.acceptance_list.accepted_date[i])
                             $(`#acceptPName-${i}`).val(response.acceptance_list.parts_name[i]);
                             $(`#acceptPNo-${i}`).val(response.acceptance_list.parts_number[i]);
+                            $(`#acceptBpCur-${i}`).val(response.acceptance_list.buy_price_cur[i]);
                             $(`#acceptBp-${i}`).val(response.acceptance_list.buy_price[i]);
                             $(`#acceptQty-${i}`).val(response.acceptance_list.acceptance_qty[i]);
                         }
@@ -1122,10 +1136,6 @@ $(document).ready(function () {
                                         alert("Changed Qty must be less than remaining PO Bal.");
                                         $(this).val("");
                                     }
-                                    //     else {
-                                    //     alert("Changed Qty must be less than remaining Original Qty.");
-                                    //     $(this).val("");
-                                    // }   
                                 } else {
                                     return false
                                 }
@@ -1185,6 +1195,7 @@ $(document).ready(function () {
                             <th width="15%">Accept Date</th>
                             <th width="15%">Description</th>
                             <th width="15%">Maker P/N</th>
+                            <th width="5%">CUR</th>
                             <th width="10%">B/P</th>
                             <th width="10%">Accept Qty</th>
                         </tr>
@@ -1201,6 +1212,7 @@ $(document).ready(function () {
                                 <td><input id="acceptDate-${i}" class="form-control" type="text" name="acceptDate2" maxlength="10" readonly=True></td>
                                 <td><input id="acceptPName-${i}" class="form-control form-control" type="text" readonly=True></td>
                                 <td><input id="acceptPNo-${i}" class="form-control" type="text" readonly=True></td>
+                                <td><input id="acceptBpCur-${i}" class="form-control" type="text" readonly=True></td>
                                 <td><input id="acceptBp-${i}" class="form-control" type="text" readonly=True></td>
                                 <td><input id="acceptQty-${i}" class="form-control"  type="text" name="acceptQty" data-id="${i}" readonly=True></td>
                             </tr>
@@ -1212,6 +1224,7 @@ $(document).ready(function () {
                             $(`#acceptDate-${i}`).val(response.acceptance_list.accepted_date[i])
                             $(`#acceptPName-${i}`).val(response.acceptance_list.parts_name[i]);
                             $(`#acceptPNo-${i}`).val(response.acceptance_list.parts_number[i]);
+                            $(`#acceptBpCur-${i}`).val(response.acceptance_list.buy_price_cur[i]);
                             $(`#acceptBp-${i}`).val(response.acceptance_list.buy_price[i]);
                             $(`#acceptQty-${i}`).val(response.acceptance_list.acceptance_qty[i]);
                         }
@@ -1310,14 +1323,15 @@ $(document).ready(function () {
     $('#itemCreateConfirm').click(function () {
         let serializedData = $('#itemCreateForm').serialize();
    
-        let prjCode = $('#prjCode').val();
-        let customer = $('#customer').val();
+        let prjCode = $('#prjCode1').val();
         let supplier = $('#supplier').val();
         let partsName = $('#partsName').val();
         let partsNum = $('#partsNum').val();
+        let sellCur = $('#sellCur').val();
         let sellPrice = $('#sellPrice').val();
+        let buyCur = $('#buyCur').val();
         let buyPrice = $('#buyPrice').val();
-        if (prjCode && customer && supplier && partsName && partsNum && sellPrice && buyPrice) {
+        if (prjCode && supplier && partsName && partsNum && sellCur && sellPrice &&  buyCur && buyPrice) {
             $.ajax({
                 url: '/item-create/',
                 data: serializedData,
@@ -1331,11 +1345,12 @@ $(document).ready(function () {
                     <tr>
                         <td><input class="form-control" type="text" name="itemCode" maxlength="5" value="${response.new_item.item_code[0]}" readonly=True></td>
                         <td><input class="form-control" type="text" name="prjCode" maxlength="4" value="${response.new_item.prj_code[0]}" readonly=True></td>
-                        <td><input class="form-control" type="text" name="customer" maxlength="5" value="${response.new_item.customer[0]}" readonly=True></td>
                         <td><input class="form-control" type="text" name="supplier" maxlength="5" value="${response.new_item.supplier[0]}" readonly=True></td>
                         <td><input class="form-control" type="text" name="partsName" maxlength="" value="${response.new_item.parts_name[0]}" readonly=True></td>
                         <td><input class="form-control" type="text" name="partsNum" maxlength="" value="${response.new_item.parts_number[0]}" readonly=True></td>
+                        <td><input class="form-control" type="text" name="sellCur" maxlength="" value="${response.new_item.sell_price_cur[0]}" readonly=True></td>
                         <td><input class="form-control" type="text" name="sellPrice" maxlength="" value="${response.new_item.sell_price[0]}" readonly=True></td>
+                        <td><input class="form-control" type="text" name="buyCur" maxlength="" value="${response.new_item.buy_price_cur[0]}" readonly=True></td>
                         <td><input class="form-control" type="text" name="buyPrice" maxlength="" value="${response.new_item.buy_price[0]}" readonly=True></td>
                     </tr>
                     `);

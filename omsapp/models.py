@@ -138,25 +138,36 @@ class Supplier(models.Model):
 
 class Project(models.Model):
     prj_code = models.CharField(max_length=4, unique=True)
-    customer_code = models.ForeignKey(Customer, on_delete=models.PROTECT)
+    customer = models.ForeignKey(Customer, on_delete=models.PROTECT, null=True)
     def __str__(self):
         return self.prj_code
+
+class Currency_S(models.Model):
+    currency = models.CharField(max_length=3, unique=True)
+    def __str__(self):
+        return self.currency
+    
+class Currency_B(models.Model):
+    currency = models.CharField(max_length=3, unique=True)
+    def __str__(self):
+        return self.currency
     
 
 def get_next():
     try:
-        return int(Item.objects.latest('item_code').item_code) + 1
+        return str(int(Item.objects.latest('item_code').item_code) + 1)
     except Item.DoesNotExist:
-        return 10000
+        return '10000'
 
 class Item(models.Model):
-    item_code = models.IntegerField(unique=True,default=get_next)
+    item_code = models.CharField(max_length=5, unique=True,default=get_next)
     prj_code = models.ForeignKey(Project, on_delete=models.PROTECT)
-    customer = models.ForeignKey(Customer, on_delete=models.PROTECT)
     supplier = models.ForeignKey(Supplier, on_delete=models.PROTECT)
     parts_name = models.CharField(max_length=30)
     parts_number = models.CharField(max_length=30)
+    sell_price_cur = models.ForeignKey(Currency_S, on_delete=models.PROTECT, null=True)
     sell_price = models.DecimalField(max_digits=9, decimal_places=2)
+    buy_price_cur = models.ForeignKey(Currency_B, on_delete=models.PROTECT, null=True)
     buy_price = models.DecimalField(max_digits=9, decimal_places=2)
     date_created = models.DateTimeField(default=datetime.now)
     stock = models.IntegerField(default=0)
