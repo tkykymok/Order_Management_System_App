@@ -1,6 +1,4 @@
-// let csrfToken = $('input[name=csrfmiddlewaretoken]').val();
 $(document).ready(function () {
-
     // Common Function ////////////////////////////////////////////////////////////////////////////////////
     var csrfToken = $('input[name=csrfmiddlewaretoken]').val();
     // date validation ---------------------
@@ -1405,21 +1403,25 @@ $(document).ready(function () {
                         data: serializedData,
                         dataType: 'json',
                         success: function (response) {
-                            let originalSP = $('#itemInfoTable').find(`tr#item-${dataId} #sp-${dataId}`);
-                            let originalBP = $('#itemInfoTable').find(`tr#item-${dataId} #bp-${dataId}`);
-                            let updateSP = response.result.sell_price;
-                            let updateBP = response.result.buy_price;
-
-                            if (originalSP.text() != updateSP) {
-                                originalSP.text(updateSP);
-                                originalSP.css('color', 'red');
-                            }
-
-                            if (originalBP.text() != updateBP) {
-                                originalBP.text(updateBP);
-                                originalBP.css('color', 'red');
-                            }
+                            if (response.result === 'delete') {
+                                let deleteLine = $('#itemInfoTable').find(`tr#item-${dataId}`)
+                                deleteLine.remove();
+                            } else {
+                                let originalSP = $('#itemInfoTable').find(`tr#item-${dataId} #sp-${dataId}`);
+                                let originalBP = $('#itemInfoTable').find(`tr#item-${dataId} #bp-${dataId}`);
+                                let updateSP = response.result.sell_price;
+                                let updateBP = response.result.buy_price;
     
+                                if (originalSP.text() != updateSP) {
+                                    originalSP.text(updateSP);
+                                    originalSP.css('color', 'red');
+                                }
+    
+                                if (originalBP.text() != updateBP) {
+                                    originalBP.text(updateBP);
+                                    originalBP.css('color', 'red');
+                                }
+                            }
                             $("#itemUpdateTable > tbody").children().remove();
             
                         },
@@ -1439,9 +1441,93 @@ $(document).ready(function () {
     $('#modalClose').click(function () {
         $("#itemUpdateTable > tbody").children().remove();
     });
-        
-    
 
 
+
+   // To Do ////////////////////////////////////////////////////////////////////////////////////
+    $('#createButton').click(function () {
+        let serializedData = $('#createTaskForm').serialize();
+        $.ajax({
+            url: '/', 
+            data: serializedData,
+            type: 'post',
+            dataType: 'json',
+            success: function (response) {
+                $('#taskList').prepend( 
+                `
+                <div class="card mb-1 mx-3" id="taskCard" data-id="${response.task.id}">
+                    <div class="card-body">
+                            ${response.task.title}
+                        <button type="button" class="close float-right" data-id="${response.task.id}">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </button>
+                    </div>
+                 </div>               
+                `
+                )
+            }
+        })
+        $('#createTaskForm')[0].reset(); 
+    });
+
+    $('#createTaskForm').on('change', function () {
+        let serializedData = $('#createTaskForm').serialize();
+        $.ajax({
+            url: '/',
+            data: serializedData,
+            type: 'post',
+            dataType: 'json',
+            success: function (response) {
+                $('#taskList').prepend(`
+                <div class="card mb-1 mx-3" id="taskCard" data-id="${response.task.id}">
+                    <div class="card-body">
+                            ${response.task.title}
+                        <button type="button" class="close taskDelete float-right" data-id="${response.task.id}" style="{% if task.completed %} text-decoration: line-through {% endif %}">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </button>
+                    </div>
+                 </div>               
+                `)
+            }
+        });
+        $('#createTaskForm')[0].reset(); 
+    }); 
+
+    $('#taskList').on('click', '.card', function () {
+        let dataId = $(this).data('id');
+        $.ajax({
+            url: `/task-complete/${dataId}/`,
+            data: {
+                csrfmiddlewaretoken: csrfToken,
+                id: dataId
+            },
+            type: 'post',
+            dataType: 'json',
+            success: function () {
+                let cardItem = $(`#taskCard[data-id="${dataId}"]`);
+                cardItem.css('text-decoration', 'line-through');
+            }
+        });
+    }).on('click', '.taskDelete', function (event) {
+        event.stopPropagation();
+        let dataId = $(this).data('id');
+        let deleteCard = $(this).parent().parent();
+        $.ajax({
+            url: `/task-delete/${dataId}/`,
+            data: {
+                csrfmiddlewaretoken: csrfToken,
+                id: dataId
+            },
+            type: 'post',
+            dataType: 'json',
+            success: function (response) {
+                if (response.result) {
+                    deleteCard.remove();
+                }
+            }
+        });
+    });
 });
 

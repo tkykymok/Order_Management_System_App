@@ -3,19 +3,24 @@ from django.contrib import messages
 from django.views.generic import (
     View,
     ListView,
+    CreateView,
     DetailView,
-    UpdateView
+    UpdateView,
+    DeleteView
 )
-from omsapp.models import Order, Item, OrderNumber, Order, Project, User, Shipment, Acceptance, Customer, Supplier, Currency_S, Currency_B
+from omsapp.models import Order, Item, OrderNumber, Order, Project, User, Shipment, Acceptance, Customer, Supplier, Currency_S, Currency_B, Task
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from django.urls import reverse_lazy
-# from extra_views import InlineFormSetFactory, CreateWithInlinesView, UpdateWithInlinesView
 from django.views.generic import TemplateView
-from .forms import OrderNumberForm, OrderForm
+from .forms import CustomerCreateForm, SupplierCreateForm, ProjectCreateForm, TaskForm
+from datetime import datetime
 
 from django.http import JsonResponse
 from django.forms.models import model_to_dict
+
+from django.utils.decorators import method_decorator
+from omsapp.decorators import admin_only
 
 import pandas as pd
 from django_pandas.io import read_frame
@@ -23,18 +28,48 @@ from django_pandas.io import read_frame
 import json
 
 
-class MenuView(View,LoginRequiredMixin):
+class MenuView(LoginRequiredMixin, View):
     def get(self, request):
-        return render(request, 'omsapp/menu.html')
+        user = User.objects.get(username=request.user)
+        initial_dict = {'user':user}
+        form = TaskForm(initial=initial_dict)
+        tasks = Task.objects.filter(user=user).order_by('-id')
+        context = {'form':form, 'tasks':tasks}
+        
+        return render(request, 'omsapp/menu.html', context)
+    
+    def post(self, request):
+        user = User.objects.get(username=request.user)
+        initial_dict = {'user':user}
+        form = TaskForm(request.POST, initial=initial_dict)
+        
+        if form.is_valid():
+            new_task = form.save()
+            return JsonResponse({'task':model_to_dict(new_task)}, status=200)
+        else:
+            return redirect ('menu')
+        
+class TaskComplete(View):
+    def post(self, request, id):
+        task = Task.objects.get(id=id)
+        task.completed  = True
+        task.save()
+        return JsonResponse({'task':model_to_dict(task)}, status=200)
+        
+class TaskDelete(View):
+    def post(self,request, id):
+        delete_task = Task.objects.get(id=id)
+        delete_task.delete()
+        return JsonResponse({'result':True}, status=200)
 
 ### Order ########################### 
-class OrderEntryView(View, LoginRequiredMixin):
+class OrderEntryView(LoginRequiredMixin,View):
     def get(self,request):
         user = request.user
         context = {'user':user}
         return render(request, 'omsapp/order_entry.html')
 
-class PrjCodeGet(View, LoginRequiredMixin):
+class PrjCodeGet(LoginRequiredMixin,View):
     def post(self, request):
         prj_code_get = request.POST.getlist('prjCode', None)
         prj_code = Project.objects.get(prj_code = prj_code_get[0])
@@ -42,7 +77,7 @@ class PrjCodeGet(View, LoginRequiredMixin):
         person_incharge = request.user
         return JsonResponse({'customer_info':model_to_dict(customer_info), 'person_incharge':model_to_dict(person_incharge)}, status=200)
     
-class OrderNumberCreate(View, LoginRequiredMixin):
+class OrderNumberCreate(LoginRequiredMixin,View):
     def post(self, request):
         user = request.user
         order_number = request.POST.get('orderNumber',None)
@@ -56,7 +91,7 @@ class OrderNumberCreate(View, LoginRequiredMixin):
         
         return JsonResponse({'orderNumber':model_to_dict(new_order_number)}, status=200)
         
-class ItemInfoGet(View, LoginRequiredMixin):
+class ItemInfoGet(LoginRequiredMixin,View):
     def post(self, request):
         item_code = request.POST.get('item', None)
         item_info = Item.objects.get(item_code=item_code)
@@ -65,7 +100,7 @@ class ItemInfoGet(View, LoginRequiredMixin):
         return JsonResponse({'item_info':model_to_dict(item_info),'prj':prj}, status=200)
     
     
-class OrderCreateConfirm(View, LoginRequiredMixin):
+class OrderCreateConfirm(LoginRequiredMixin,View):
     def post(self, request):
         input_order_number = request.POST.get('orderNumber', None)
     
@@ -88,7 +123,7 @@ class OrderCreateConfirm(View, LoginRequiredMixin):
                 )
         return JsonResponse({'result':True}, status=200)
 
-class OrderUpdateDataGet(View):
+class OrderUpdateDataGet(LoginRequiredMixin,View):
     def post(self, request):
         input_order_number = request.POST.get('orderNumber', None)
         order_number = OrderNumber.objects.get(order_number=input_order_number)
@@ -109,7 +144,7 @@ class OrderUpdateDataGet(View):
     
         return JsonResponse({'order_list':data2}, status=200)
     
-class OrderUpdateConfirm(View):
+class OrderUpdateConfirm(LoginRequiredMixin,View):
     def post(self, request):
         input_order_number = request.POST.get('orderNumber', None)
         order_id = request.POST.getlist('orderId', None)
@@ -128,7 +163,7 @@ class OrderUpdateConfirm(View):
                 
         
         
-class OrderDeleteConfirm(View):
+class OrderDeleteConfirm(LoginRequiredMixin,View):
     def post(self, request):
         delete_check = request.POST.getlist('deleteCheckNum', None)
         order_id = request.POST.getlist('orderId', None)
@@ -143,13 +178,13 @@ class OrderDeleteConfirm(View):
 
 
 ### Shipment ########################### 
-class ShipmentEntryView(View):
+class ShipmentEntryView(LoginRequiredMixin,View):
     def get(self, request):
         user = request.user
         context = {'user':user}
         return render(request, 'omsapp/shipment_entry.html', context)
     
-class ShipmentDataGet(View):
+class ShipmentDataGet(LoginRequiredMixin,View):
     def get(self, request):
         input_order_number = request.GET.get('shipOrderNumber', None)
         parent_order_number = OrderNumber.objects.get(order_number = input_order_number)
@@ -178,7 +213,7 @@ class ShipmentDataGet(View):
     
         return JsonResponse({'ship_order_list':data2}, status=200)
 
-class ShipmentComplete(View):
+class ShipmentComplete(LoginRequiredMixin,View):
     def post(self, request):
         order_id = request.POST.getlist('orderId', None)
         item_code_list = request.POST.getlist('shipItem', None)
@@ -211,7 +246,7 @@ class ShipmentComplete(View):
                 
         return JsonResponse({'result':True}, status=200)
     
-class ShipmentUpdateDataGet(View):
+class ShipmentUpdateDataGet(LoginRequiredMixin,View):
     def get(self, request):
         input_order_number = request.GET.get('shipOrderNumber', None)
         input_id = request.GET.get('orderId', None)
@@ -250,7 +285,7 @@ class ShipmentUpdateDataGet(View):
         return JsonResponse({'shipment_list':data3}, status=200)
         
 
-class ShipmentUpdateConfirm(View):
+class ShipmentUpdateConfirm(LoginRequiredMixin,View):
     def post(self,request):
         orderId_list = request.POST.getlist('orderId', None)
         item_code_list = request.POST.getlist('shipItem', None)
@@ -283,7 +318,7 @@ class ShipmentUpdateConfirm(View):
         
         return JsonResponse({'result':True}, status=200)
 
-class ShipmentDeleteConfirm(View):
+class ShipmentDeleteConfirm(LoginRequiredMixin,View):
     def post(self, request):
         delete_check = request.POST.getlist('deleteCheckNum', None)
         orderId_list = request.POST.getlist('orderId', None)
@@ -311,13 +346,13 @@ class ShipmentDeleteConfirm(View):
 
 
 ### Acceptance ########################### 
-class AcceptanceEntryView(View):
+class AcceptanceEntryView(LoginRequiredMixin,View):
     def get(self, request):
         user = request.user
         context = {'user':user}
         return render(request, 'omsapp/acceptance_entry.html', context)
     
-class AcceptanceDataGet(View):
+class AcceptanceDataGet(LoginRequiredMixin,View):
     def get(self, request):
         input_order_number = request.GET.get('acceptOrderNumber', None)
         supplier_code = request.GET.get('supplier', None)
@@ -350,7 +385,7 @@ class AcceptanceDataGet(View):
     
         return JsonResponse({'accept_order_list':data2}, status=200)
       
-class AcceptanceComplete(View):
+class AcceptanceComplete(LoginRequiredMixin,View):
     def post(self, request):
         input_order_number = request.POST.get('orderNumber', None)
         order_id = request.POST.getlist('orderId', None)
@@ -386,7 +421,7 @@ class AcceptanceComplete(View):
         return JsonResponse({'result':True}, status=200)
     
 
-class AcceptanceUpdateDataGet(View):
+class AcceptanceUpdateDataGet(LoginRequiredMixin,View):
     def get(self, request):
         input_order_number = request.GET.get('shipOrderNumber', None)
         input_id = request.GET.get('orderId', None)
@@ -427,7 +462,7 @@ class AcceptanceUpdateDataGet(View):
         return JsonResponse({'acceptance_list':data3}, status=200)
    
 
-class AcceptanceUpdateConfirm(View):
+class AcceptanceUpdateConfirm(LoginRequiredMixin,View):
     def post(self,request):
         orderId_list = request.POST.getlist('orderId', None)
         item_code_list = request.POST.getlist('acceptItem', None)
@@ -459,7 +494,7 @@ class AcceptanceUpdateConfirm(View):
 
         return JsonResponse({'result':True}, status=200)
 
-class AcceptanceDeleteConfirm(View):
+class AcceptanceDeleteConfirm(LoginRequiredMixin,View):
     def post(self, request):
         delete_check = request.POST.getlist('deleteCheckNum', None)
         orderId_list = request.POST.getlist('orderId', None)
@@ -485,7 +520,7 @@ class AcceptanceDeleteConfirm(View):
 
     
 ### Order Info ########################### 
-class OrderInfoView(View, LoginRequiredMixin):
+class OrderInfoView(LoginRequiredMixin,View):
     def get(self, request):   
         input_prj_code = request.GET.get('prjCode', None)
         input_order_number = request.GET.get('orderNum', None)
@@ -500,7 +535,10 @@ class OrderInfoView(View, LoginRequiredMixin):
             'supplier', 
             'parts_name', 
             'parts_number', 
-            'sell_price','buy_price'
+            'sell_price_cur',
+            'sell_price',
+            'buy_price_cur',
+            'buy_price'
         ])
         
         rf_project = read_frame(Project.objects.all(), fieldnames=[
@@ -699,7 +737,7 @@ class OrderInfoView(View, LoginRequiredMixin):
             return render(request, 'omsapp/order_info.html',context)
 
 ### Acceptance Info ########################### 
-class AcceptanceInfoView(View, LoginRequiredMixin):
+class AcceptanceInfoView(LoginRequiredMixin,View):
     def get(self, request):   
         input_prj_code = request.GET.get('prjCode', None)
         input_order_number = request.GET.get('orderNum', None)
@@ -711,11 +749,10 @@ class AcceptanceInfoView(View, LoginRequiredMixin):
         rf_item = read_frame(Item.objects.all(),fieldnames=[
             'item_code',
             'prj_code', 
-            # 'customer', 
             'supplier', 
             'parts_name', 
             'parts_number', 
-            # 'sell_price',
+            'buy_price_cur',
             'buy_price'
         ])
         
@@ -918,7 +955,7 @@ class AcceptanceInfoView(View, LoginRequiredMixin):
             return render(request, 'omsapp/acceptance_info.html',context)
 
 ### Shipment Info ########################### 
-class ShipmentInfoView(View, LoginRequiredMixin):
+class ShipmentInfoView(LoginRequiredMixin,View):
     def get(self, request):   
         input_prj_code = request.GET.get('prjCode', None)
         input_order_number = request.GET.get('orderNum', None)
@@ -932,7 +969,8 @@ class ShipmentInfoView(View, LoginRequiredMixin):
             'prj_code', 
             'parts_name', 
             'parts_number', 
-            'sell_price',
+            'sell_price_cur',
+            'sell_price'
         ])
         
         rf_project = read_frame(Project.objects.all(), fieldnames=[
@@ -1142,7 +1180,7 @@ class ShipmentInfoView(View, LoginRequiredMixin):
             return render(request, 'omsapp/shipment_info.html',context)
 
 ### Inventory Info ########################### 
-class ItemInfoView(View, LoginRequiredMixin):
+class ItemInfoView(LoginRequiredMixin,View):
     def get(self, request):
         input_prj_code = request.GET.get('prjCode', None)
         input_item_code = request.GET.get('itemCode', None)
@@ -1270,7 +1308,12 @@ class ItemInfoView(View, LoginRequiredMixin):
             
 
 
-class ItemCreateView(View, LoginRequiredMixin):
+### Admin Only ####################################### 
+
+decorators = [admin_only]
+
+@method_decorator(decorators, name='dispatch')
+class ItemCreateView(LoginRequiredMixin,View):
     def get(self,request):
         sell_cur_list = Currency_S.objects.all()
         buy_cur_list = Currency_B.objects.all()
@@ -1311,8 +1354,8 @@ class ItemCreateView(View, LoginRequiredMixin):
         
         return JsonResponse({'new_item':data1}, status=200)
 
-
-class ItemUpdateView(View, LoginRequiredMixin):
+@method_decorator(decorators, name='dispatch')
+class ItemUpdateView(LoginRequiredMixin,View):
     def get(self,request):
         item_id = request.GET.get('dataId', None)
         update_item = Item.objects.get(id=item_id)
@@ -1340,9 +1383,73 @@ class ItemUpdateView(View, LoginRequiredMixin):
             
         elif delete_check == "1": #delete
             update_item.delete()
-            return JsonResponse({'result':True}, status=200)
-            
-            
-            
-        
+            return JsonResponse({'result':'delete'}, status=200)  
+
+@method_decorator(decorators, name='dispatch')
+class CustomerCreateView(LoginRequiredMixin,CreateView):
+    model = Customer
+    form_class = CustomerCreateForm
+    template_name = "omsapp/customer_create_form.html"
+    success_url = reverse_lazy("customer_info")
+
+@method_decorator(decorators, name='dispatch')
+class CustomerUpdateView(LoginRequiredMixin,UpdateView):
+    model = Customer
+    form_class = CustomerCreateForm
+    template_name = "omsapp/customer_update_form.html"
+    success_url = reverse_lazy("customer_info")
+
+@method_decorator(decorators, name='dispatch') 
+class CustomerDeleteView(LoginRequiredMixin,DeleteView):
+    model = Customer
+    success_url = reverse_lazy("customer_info")
+
+@method_decorator(decorators, name='dispatch')
+class CustomerListView(LoginRequiredMixin,ListView):
+    model = Customer
+
+@method_decorator(decorators, name='dispatch')
+class SupplierCreateView(LoginRequiredMixin,CreateView):
+    model = Supplier
+    form_class = SupplierCreateForm
+    template_name = "omsapp/supplier_create_form.html"
+    success_url = reverse_lazy("supplier_info")
+
+@method_decorator(decorators, name='dispatch')
+class SupplierUpdateView(LoginRequiredMixin,UpdateView):
+    model = Supplier
+    form_class = SupplierCreateForm
+    template_name = "omsapp/supplier_update_form.html"
+    success_url = reverse_lazy("supplier_info")
+
+@method_decorator(decorators, name='dispatch')
+class SupplierDeleteView(LoginRequiredMixin,DeleteView):
+    model = Supplier
+    success_url = reverse_lazy("supplier_info")
+
+@method_decorator(decorators, name='dispatch')
+class SupplierListView(LoginRequiredMixin,ListView):
+    model = Supplier
     
+@method_decorator(decorators, name='dispatch')
+class ProjectCreateView(LoginRequiredMixin,CreateView):
+    model = Project
+    form_class = ProjectCreateForm
+    template_name = "omsapp/project_create_form.html"
+    success_url = reverse_lazy("project_info")
+
+@method_decorator(decorators, name='dispatch')
+class ProjectUpdateView(LoginRequiredMixin,UpdateView):
+    model = Project
+    form_class = ProjectCreateForm
+    template_name = "omsapp/project_update_form.html"
+    success_url = reverse_lazy("project_info")
+
+@method_decorator(decorators, name='dispatch')
+class ProjectDeleteView(LoginRequiredMixin,DeleteView):
+    model = Project
+    success_url = reverse_lazy("project_info")
+
+@method_decorator(decorators, name='dispatch')     
+class ProjectListView(LoginRequiredMixin,ListView):
+    model = Project

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container">
+    <div class="ml-2 mt-3 mb-3">
+        <h2>Project Information</h2>
+    </div>
+    
+    <div class="row">
+        <div class="col">
+            <table id="" class="table table-sm bg-light table-bordered table-striped">
+                <tr>
+                    <th>Project Code</th>
+                    <th>Customer Name</th>
+                    <th colspan="2" width="10%"></th>
+                </tr>
+                
+                {% for project in object_list %}
+                <tr>
+                    <td>{{ project.prj_code }}</td>
+                    <td>{{ project.customer }}</td>
+                    <td><a href="{% url 'project_update' project.pk %}" class="btn-sm btn-success btn-block">Update</a></td>
+                    <td><a href="{% url 'project_delete' project.pk %}" class="btn-sm btn-danger btn-block">Delete</a></td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

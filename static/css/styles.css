@@ -2,6 +2,36 @@ body {
     background: rgb(208, 240, 250);
 }
 
+
+#taskCard {
+    background-color: antiquewhite;
+    padding: 0;
+    border: 0;
+}
+
+#taskCard:hover {
+    cursor: pointer;
+    background-color: rgb(250, 229, 202);
+    display: block;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+#CompletedTaskCard {
+    background-color: gray;
+    padding: 0;
+    border: 0;
+}
+
+
+
+.hello-msg{
+    font-size:18px;
+    color: #fff;
+    margin-right:20px;
+}
+
 .menubtn {
     height: 50px;
     font-size: large;
@@ -21,11 +51,6 @@ input {
     border-radius: 5px;
 }
 
-
-ul {
-    padding: 0;
-    margin: 0 auto;
-}
 
 .check-box {
     width: 20px;
@@ -65,7 +90,7 @@ ul li{
 }
 
 .login-form {
-    margin-top:200px;
+    margin-top:120px;
 }
 
 

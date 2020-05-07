@@ -69,6 +69,7 @@ admin.site.register(Shipment,ShipmentAdmin)
 admin.site.register(Acceptance)
 admin.site.register(Currency_S)
 admin.site.register(Currency_B)
+admin.site.register(Task)
 
 
     
