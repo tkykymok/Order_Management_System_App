@@ -213,3 +213,14 @@ class Acceptance(models.Model):
     accepted_date = models.DateField(default=datetime.today)
     def __str__(self):
         return str(self.order_number)
+    
+
+
+class Task (models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE ,null=True)
+    title = models.CharField(max_length=255)
+    date_created = models.DateTimeField(default=datetime.now)
+    completed = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return self.title

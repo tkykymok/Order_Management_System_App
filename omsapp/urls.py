@@ -4,6 +4,10 @@ from . import views
 
 urlpatterns = [
     path('', views.MenuView.as_view(), name='menu'),
+    path('task-delete/<str:id>/', views.TaskDelete.as_view(), name='task_delete'),
+    path('task-complete/<str:id>/', views.TaskComplete.as_view(), name='task_delete'),
+
+    
     path('order-entry/', views.OrderEntryView.as_view(), name='order_entry'),
     path('prj-code-get/', views.PrjCodeGet.as_view(), name='prj_code_get'),
     path('order-number-create/', views.OrderNumberCreate.as_view(), name='order_number_create'),
@@ -36,5 +40,20 @@ urlpatterns = [
     
     path('item-create/', views.ItemCreateView.as_view(), name='item_create'),
     path('item-update/', views.ItemUpdateView.as_view(), name='item_update'),
+    
+    
+    path('customer-create/', views.CustomerCreateView.as_view(), name='customer_create'),
+    path('customer-update/<str:pk>', views.CustomerUpdateView.as_view(), name='customer_update'),
+    path('customer-delete/<str:pk>', views.CustomerDeleteView.as_view(), name='customer_delete'),
+    path('customer-info/', views.CustomerListView.as_view(), name='customer_info'),
 
+    path('supplier-create/', views.SupplierCreateView.as_view(), name='supplier_create'),
+    path('supplier-update/<str:pk>', views.SupplierUpdateView.as_view(), name='supplier_update'),
+    path('supplier-delete/<str:pk>', views.SupplierDeleteView.as_view(), name='supplier_delete'),
+    path('supplier-info/', views.SupplierListView.as_view(), name='supplier_info'),
+    
+    path('project-create/', views.ProjectCreateView.as_view(), name='project_create'),
+    path('project-update/<str:pk>', views.ProjectUpdateView.as_view(), name='project_update'),
+    path('project-delete/<str:pk>', views.ProjectDeleteView.as_view(), name='project_delete'),
+    path('project-info/', views.ProjectListView.as_view(), name='project_info'),
 ]

@@ -1,28 +1,84 @@
 {% extends "base.html" %}
+{% load utils %}
 
 {% block content %}
 
-<div class="container" >
-    <div class="ml-2 mt-3 mb-3"><h2>Main Menu</h2></div>
-    <div class="row pt-5">
-        <div class="col-4"><a class="btn btn-info btn-lg btn-block menubtn" href="{% url 'order_entry' %}" >Order Entry</a></div>
-        <div class="col-4"><a class="btn btn-info btn-lg btn-block menubtn" href="{% url 'shipment_entry' %}" >Shipment Entry</a></div>
-        <div class="col-4"><a class="btn btn-info btn-lg btn-block menubtn" href="{% url 'acceptance_entry' %}" >Acceptance Entry</a></div>  
+<div class="container-fruid">
+    <div class="row justify-content-center">
+        <div class="col-8">
+            <div class="ml-2 mt-3 mb-3"><h2>Main Menu</h2></div>
+            <hr>
+            <div class="row pt-2">
+                <div class="col-4"><a class="btn btn-info btn-lg btn-block menubtn" href="{% url 'order_entry' %}" >Order Entry</a></div>
+                <div class="col-4"><a class="btn btn-info btn-lg btn-block menubtn" href="{% url 'shipment_entry' %}" >Shipment Entry</a></div>
+                <div class="col-4"><a class="btn btn-info btn-lg btn-block menubtn" href="{% url 'acceptance_entry' %}" >Acceptance Entry</a></div>  
+            </div>
+
+            <div class="row pt-4 pb-2" >
+                <div class="col-4"><a class="btn btn-info btn-lg btn-block menubtn" href="{% url 'order_info' %}" >Order Information</a></div>
+                <div class="col-4"><a class="btn btn-info btn-lg btn-block menubtn" href="{% url 'shipment_info' %}" >Shipment Information</a></div>
+                <div class="col-4"><a class="btn btn-info btn-lg btn-block menubtn" href="{% url 'acceptance_info' %}" >Acceptance Information</a></div>
+            </div>
+
+            {% if user|in_group:"admin" %}
+            <br>
+            <h2>Admin Only</h2>
+            <hr>
+            <div class="row pt-2">
+                <div class="col-4"><a class="btn btn-primary btn-lg btn-block menubtn" href="{% url 'item_create' %}" >Item Registration</a></div>
+                <div class="col-4"><a class="btn btn-primary btn-lg btn-block menubtn" href="{% url 'customer_create' %}" >Customer Registration</a></div>
+                <div class="col-4"><a class="btn btn-primary btn-lg btn-block menubtn" href="{% url 'supplier_create' %}" >Supplier Registration</a></div>  
+            </div>
+
+            <div class="row pt-4 pb-2">
+                <div class="col-4"><a class="btn btn-primary btn-lg btn-block menubtn" href="{% url 'item_info' %}" >Item Information</a></div>  
+                <div class="col-4"><a class="btn btn-primary btn-lg btn-block menubtn" href="{% url 'customer_info' %}" >Customer Information</a></div>  
+                <div class="col-4"><a class="btn btn-primary btn-lg btn-block menubtn" href="{% url 'supplier_info' %}" >Supplier Information</a></div>  
+            </div>
+            <br>
+            <div class="row pt-4">
+                <div class="col-4"><a class="btn btn-primary btn-lg btn-block menubtn" href="{% url 'project_create' %}" >Project Registration</a></div>  
+                <div class="col-4"></div>  
+                <div class="col-4"></div>  
+            </div>
+            <div class="row pt-4">
+                <div class="col-4"><a class="btn btn-primary btn-lg btn-block menubtn" href="{% url 'project_info' %}" >Project Information</a></div>  
+                <div class="col-4"></div>  
+                <div class="col-4"></div>  
+            </div>
+            {% endif %}
+        </div>
+        <div class="col-3">
+            <div class="ml-2 mt-3 mb-3"><h2>TO DO</h2></div>
+            <hr>   
+            <div class="col mb-3">
+                <form class="form-inline" id="createTaskForm" method="post"> 
+                    {% csrf_token %}
+                    
+                    <div class="mx-3">
+                        {{ form.user.as_hidden }}
+                        {{ form.title }}
+                    </div>
+                    
+                    <button type="button" class="btn btn-outline-success" id="createButton">Create</button>
+                </form>
+            </div>
+        
+       
+            <div class="col" id="taskList">
+                {% for task in tasks  %}
+                    <div class="card mb-1 mx-3" id="taskCard" data-id="{{ task.id }}" style="{% if task.completed %} text-decoration: line-through {% endif %}">
+                        <div class="card-body">
+                            {{ task.title }} 
+                            <button type="button" class="close taskDelete float-right" data-id="{{ task.id }}">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
     </div>
-
-    <div class="row pt-5">
-        <div class="col-4"><a class="btn btn-info btn-lg btn-block menubtn" href="{% url 'order_info' %}" >Order Information</a></div>
-        <div class="col-4"><a class="btn btn-info btn-lg btn-block menubtn" href="{% url 'shipment_info' %}" >Shipment Information</a></div>
-        <div class="col-4"><a class="btn btn-info btn-lg btn-block menubtn" href="{% url 'acceptance_info' %}" >Acceptance Information</a></div>
-    </div>    
-    
-    <div class="row pt-5">
-        <div class="col-4"><a class="btn btn-info btn-lg btn-block menubtn" href="{% url 'item_create' %}" >Item Create</a></div>
-        <div class="col-4"><a class="btn btn-info btn-lg btn-block menubtn" href="" >NA</a></div>  
-        <div class="col-4"><a class="btn btn-info btn-lg btn-block menubtn" href="{% url 'item_info' %}" >Item Information</a></div>  
-    </div>
-
-
-
 </div>
 {% endblock %}

@@ -42,6 +42,7 @@
                     <th>Item Code</th>
                     <th>Description</th>
                     <th>Maker P/N</th>
+                    <th>CUR</th>
                     <th>S/P</th>
                     <th>Shipperd Qty</th>
                     <th>Amount</th>
@@ -59,9 +60,10 @@
                     <td>{{ row.item_code }}</td>
                     <td>{{ row.parts_name }}</td>
                     <td>{{ row.parts_number }}</td>
-                    <td>¥{{ row.sell_price }}</td>
+                    <td>{{ row.sell_price_cur }}</td>
+                    <td>{{ row.sell_price }}</td>
                     <td>{{ row.shipment_qty | intcomma }}</td>
-                    <td>¥{{ row.amount | intcomma }}</td>
+                    <td>{{ row.amount | intcomma }}</td>
                     <td>{{ row.user }}</td>
                 </tr>
                 {% endfor %}

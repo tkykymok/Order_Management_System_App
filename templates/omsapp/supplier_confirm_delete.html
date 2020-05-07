@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load bootstrap4 %}
+{% block content %}
+ 
+ 
+<div class="container">
+    <div class="row justify-content-center login-form">
+        <div class="col-4 bg-light p-3 ">
+        <h3>Supplier Delete</h3>
+            <p>Are you sure you want to delete </p>
+            <div>
+                <form class="" method="POST">{% csrf_token %}
+                    <p>{{supplier.supplier_code}}/{{supplier.name}} ?</p>
+                    <button class="btn btn-danger btn-block" width="100" type="submit" name="Login">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

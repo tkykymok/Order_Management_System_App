@@ -1,21 +1,28 @@
-from django.forms import ModelForm
-from .models import OrderNumber,Order
+from django import forms  
+from .models import Customer, Supplier, Project, Task
 
-class OrderNumberForm(ModelForm):
-    class Meta:
-        model = OrderNumber
-        fields = ['order_number']
-        
-    def save(self, commit=True):
-        instance = super(OrderNumberForm, self).save(commit=commit)
 
-        if commit:
-            instance.save()
-            return instance
-            
-            
-        
-class OrderForm(ModelForm):
+class CustomerCreateForm(forms.ModelForm):
     class Meta:
-        model = Order
-        fields = '__all__'
+        model = Customer
+        fields = ['customer_code', 'name', 'address', 'phone']
+        
+class SupplierCreateForm(forms.ModelForm):
+    class Meta:
+        model = Supplier
+        fields = ['supplier_code', 'name', 'address', 'phone']
+        
+class ProjectCreateForm(forms.ModelForm):
+    class Meta:
+        model = Project
+        fields = ['prj_code', 'customer']
+        
+class TaskForm(forms.ModelForm):
+    class Meta:
+        model = Task
+        fields = ['user','title']
+        
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control'})
+        }
+        
