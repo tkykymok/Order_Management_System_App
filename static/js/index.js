@@ -1529,5 +1529,24 @@ $(document).ready(function () {
             }
         });
     });
+
+
+   // Login help ////////////////////////////////////////////////////////////////////////////////////
+    $('#adminUser').click(function () {
+        let adminUserNum = '55555';
+        let adminUserPass = 'admin101010';
+        $('#id_username').val(adminUserNum);
+        $('#id_password').val(adminUserPass);
+        $('#login').trigger('click');
+    });
+
+    $('#generalUser').click(function () {
+        let generalUserNum = '11111';
+        let generalUserPass = 'user101010';
+        $('#id_username').val(generalUserNum);
+        $('#id_password').val(generalUserPass);
+        $('#login').trigger('click');
+    });
+    
 });
 

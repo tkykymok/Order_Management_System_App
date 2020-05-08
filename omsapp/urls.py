@@ -1,11 +1,11 @@
 from django.urls import path
 from . import views
 
-
 urlpatterns = [
     path('', views.MenuView.as_view(), name='menu'),
     path('task-delete/<str:id>/', views.TaskDelete.as_view(), name='task_delete'),
     path('task-complete/<str:id>/', views.TaskComplete.as_view(), name='task_delete'),
+        
 
     
     path('order-entry/', views.OrderEntryView.as_view(), name='order_entry'),

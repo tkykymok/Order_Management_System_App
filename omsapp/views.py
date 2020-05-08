@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.views.generic import (
@@ -10,6 +11,7 @@ from django.views.generic import (
 )
 from omsapp.models import Order, Item, OrderNumber, Order, Project, User, Shipment, Acceptance, Customer, Supplier, Currency_S, Currency_B, Task
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.views import LoginView
 
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView
@@ -26,8 +28,16 @@ import pandas as pd
 from django_pandas.io import read_frame
 
 import json
+from io import BytesIO 
+from StyleFrame import StyleFrame
+
+### Login ########################### 
+class Login(LoginView):
+    template_name = 'registration/login.html'
 
 
+
+### Menu & ToDo ########################### 
 class MenuView(LoginRequiredMixin, View):
     def get(self, request):
         user = User.objects.get(username=request.user)
@@ -518,14 +528,16 @@ class AcceptanceDeleteConfirm(LoginRequiredMixin,View):
                 pass
         return JsonResponse({'result':True}, status=200)
 
-    
+
+
 ### Order Info ########################### 
-class OrderInfoView(LoginRequiredMixin,View):
+class OrderInfoView(LoginRequiredMixin,View):    
     def get(self, request):   
         input_prj_code = request.GET.get('prjCode', None)
         input_order_number = request.GET.get('orderNum', None)
         input_order_date_s = request.GET.get('orderDateS', None)
         input_order_date_e = request.GET.get('orderDateE', None)    
+        export = request.GET.get('export', None)
     
         rf_order = read_frame(Order.objects.all().order_by('id'))
      
@@ -561,8 +573,14 @@ class OrderInfoView(LoginRequiredMixin,View):
             on='order_number', 
             how='inner'
             )
- 
 
+        data2 = data2.loc[:,[
+            'id','prj_code','order_number','date_created','customer','item_code','parts_name','parts_number','supplier',
+            'quantity','shipment_qty','acceptance_qty','stock','balance',
+            'sell_price_cur','sell_price','buy_price_cur','buy_price','supplier_delivery_date','customer_delivery_date','user'
+            ]]
+        
+ 
         # 1. prj_code only
         if input_prj_code != "" and input_order_number == "" and input_order_date_s == "" and input_order_date_e == "":
             order_list = data2[data2['prj_code']==input_prj_code]
@@ -573,7 +591,46 @@ class OrderInfoView(LoginRequiredMixin,View):
                 'order_date_s':input_order_date_s,
                 'order_date_e':input_order_date_e}
             print('1')
-            return render(request, 'omsapp/order_info.html',context)
+            if export is None:
+                return render(request, 'omsapp/order_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(order_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2', 
+                            best_fit=[
+                                'id',
+                                'order_number',
+                                'item_code',
+                                'quantity',
+                                'supplier_delivery_date',
+                                'customer_delivery_date',
+                                'shipment_qty',
+                                'acceptance_qty',
+                                'balance',
+                                'stock',
+                                'prj_code',
+                                'supplier',
+                                'parts_name',
+                                'parts_number',
+                                'sell_price_cur',
+                                'sell_price',
+                                'buy_price_cur',
+                                'buy_price',
+                                'customer',
+                                'user',
+                                'date_created'
+                                ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'order_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response 
             
         # 2. Order_No. only
         elif input_prj_code == "" and input_order_number != "" and input_order_date_s == "" and input_order_date_e == "":
@@ -585,7 +642,46 @@ class OrderInfoView(LoginRequiredMixin,View):
                 'order_date_s':input_order_date_s,
                 'order_date_e':input_order_date_e}
             print('2')
-            return render(request, 'omsapp/order_info.html',context)
+            if export is None:
+                return render(request, 'omsapp/order_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(order_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2', 
+                            best_fit=[
+                                'id',
+                                'order_number',
+                                'item_code',
+                                'quantity',
+                                'supplier_delivery_date',
+                                'customer_delivery_date',
+                                'shipment_qty',
+                                'acceptance_qty',
+                                'balance',
+                                'stock',
+                                'prj_code',
+                                'supplier',
+                                'parts_name',
+                                'parts_number',
+                                'sell_price_cur',
+                                'sell_price',
+                                'buy_price_cur',
+                                'buy_price',
+                                'customer',
+                                'user',
+                                'date_created'
+                                ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'order_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response 
             
         # 3. order_date_s only
         elif input_prj_code == "" and input_order_number == "" and input_order_date_s != "" and input_order_date_e == "":
@@ -598,7 +694,46 @@ class OrderInfoView(LoginRequiredMixin,View):
                 'order_date_s':input_order_date_s,
                 'order_date_e':input_order_date_e}
             print('3')
-            return render(request, 'omsapp/order_info.html',context)
+            if export is None:
+                return render(request, 'omsapp/order_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(order_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2', 
+                            best_fit=[
+                                'id',
+                                'order_number',
+                                'item_code',
+                                'quantity',
+                                'supplier_delivery_date',
+                                'customer_delivery_date',
+                                'shipment_qty',
+                                'acceptance_qty',
+                                'balance',
+                                'stock',
+                                'prj_code',
+                                'supplier',
+                                'parts_name',
+                                'parts_number',
+                                'sell_price_cur',
+                                'sell_price',
+                                'buy_price_cur',
+                                'buy_price',
+                                'customer',
+                                'user',
+                                'date_created'
+                                ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'order_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response 
             
         # 4. order_date_e only
         elif input_prj_code == "" and input_order_number == "" and input_order_date_s == "" and input_order_date_e != "":
@@ -610,7 +745,46 @@ class OrderInfoView(LoginRequiredMixin,View):
                 'order_date_s':input_order_date_s,
                 'order_date_e':input_order_date_e}
             print('4')
-            return render(request, 'omsapp/order_info.html',context) 
+            if export is None:
+                return render(request, 'omsapp/order_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(order_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2', 
+                            best_fit=[
+                                'id',
+                                'order_number',
+                                'item_code',
+                                'quantity',
+                                'supplier_delivery_date',
+                                'customer_delivery_date',
+                                'shipment_qty',
+                                'acceptance_qty',
+                                'balance',
+                                'stock',
+                                'prj_code',
+                                'supplier',
+                                'parts_name',
+                                'parts_number',
+                                'sell_price_cur',
+                                'sell_price',
+                                'buy_price_cur',
+                                'buy_price',
+                                'customer',
+                                'user',
+                                'date_created'
+                                ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'order_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response 
             
         # 5. order_date_s and order_date_e
         elif input_prj_code == "" and input_order_number == "" and input_order_date_s != "" and input_order_date_e != "":
@@ -625,7 +799,46 @@ class OrderInfoView(LoginRequiredMixin,View):
                 'order_date_s':input_order_date_s,
                 'order_date_e':input_order_date_e}
             print('5')
-            return render(request, 'omsapp/order_info.html',context)
+            if export is None:
+                return render(request, 'omsapp/order_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(order_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2', 
+                            best_fit=[
+                                'id',
+                                'order_number',
+                                'item_code',
+                                'quantity',
+                                'supplier_delivery_date',
+                                'customer_delivery_date',
+                                'shipment_qty',
+                                'acceptance_qty',
+                                'balance',
+                                'stock',
+                                'prj_code',
+                                'supplier',
+                                'parts_name',
+                                'parts_number',
+                                'sell_price_cur',
+                                'sell_price',
+                                'buy_price_cur',
+                                'buy_price',
+                                'customer',
+                                'user',
+                                'date_created'
+                                ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'order_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response 
         
         # 6. prj_code and Order_No
         elif input_prj_code != "" and input_order_number != "" and input_order_date_s == "" and input_order_date_e == "":
@@ -638,7 +851,46 @@ class OrderInfoView(LoginRequiredMixin,View):
                 'order_date_s':input_order_date_s,
                 'order_date_e':input_order_date_e}      
             print('6')      
-            return render(request, 'omsapp/order_info.html',context)
+            if export is None:
+                return render(request, 'omsapp/order_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(order_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2', 
+                            best_fit=[
+                                'id',
+                                'order_number',
+                                'item_code',
+                                'quantity',
+                                'supplier_delivery_date',
+                                'customer_delivery_date',
+                                'shipment_qty',
+                                'acceptance_qty',
+                                'balance',
+                                'stock',
+                                'prj_code',
+                                'supplier',
+                                'parts_name',
+                                'parts_number',
+                                'sell_price_cur',
+                                'sell_price',
+                                'buy_price_cur',
+                                'buy_price',
+                                'customer',
+                                'user',
+                                'date_created'
+                                ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'order_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response 
         
         # 7. prj_code and order_date_s
         elif input_prj_code != "" and input_order_number == "" and input_order_date_s != "" and input_order_date_e == "":
@@ -652,7 +904,46 @@ class OrderInfoView(LoginRequiredMixin,View):
                 'order_date_s':input_order_date_s,
                 'order_date_e':input_order_date_e}
             print('7')
-            return render(request, 'omsapp/order_info.html',context)
+            if export is None:
+                return render(request, 'omsapp/order_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(order_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2', 
+                            best_fit=[
+                                'id',
+                                'order_number',
+                                'item_code',
+                                'quantity',
+                                'supplier_delivery_date',
+                                'customer_delivery_date',
+                                'shipment_qty',
+                                'acceptance_qty',
+                                'balance',
+                                'stock',
+                                'prj_code',
+                                'supplier',
+                                'parts_name',
+                                'parts_number',
+                                'sell_price_cur',
+                                'sell_price',
+                                'buy_price_cur',
+                                'buy_price',
+                                'customer',
+                                'user',
+                                'date_created'
+                                ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'order_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response 
             
         # 8. prj_code and order_date_s and order_date_e
         elif input_prj_code != "" and input_order_number == "" and input_order_date_s != "" and input_order_date_e != "":
@@ -668,7 +959,46 @@ class OrderInfoView(LoginRequiredMixin,View):
                 'order_date_s':input_order_date_s,
                 'order_date_e':input_order_date_e}
             print('8')
-            return render(request, 'omsapp/order_info.html',context)
+            if export is None:
+                return render(request, 'omsapp/order_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(order_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2', 
+                            best_fit=[
+                                'id',
+                                'order_number',
+                                'item_code',
+                                'quantity',
+                                'supplier_delivery_date',
+                                'customer_delivery_date',
+                                'shipment_qty',
+                                'acceptance_qty',
+                                'balance',
+                                'stock',
+                                'prj_code',
+                                'supplier',
+                                'parts_name',
+                                'parts_number',
+                                'sell_price_cur',
+                                'sell_price',
+                                'buy_price_cur',
+                                'buy_price',
+                                'customer',
+                                'user',
+                                'date_created'
+                                ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'order_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response 
         
         # 9. Order_No and order_date_s
         elif input_prj_code == "" and input_order_number != "" and input_order_date_s != "" and input_order_date_e == "":
@@ -682,8 +1012,47 @@ class OrderInfoView(LoginRequiredMixin,View):
                 'order_date_s':input_order_date_s,
                 'order_date_e':input_order_date_e}
             print('9')
-            return render(request, 'omsapp/order_info.html',context)
-        
+            if export is None:
+                return render(request, 'omsapp/order_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(order_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2', 
+                            best_fit=[
+                                'id',
+                                'order_number',
+                                'item_code',
+                                'quantity',
+                                'supplier_delivery_date',
+                                'customer_delivery_date',
+                                'shipment_qty',
+                                'acceptance_qty',
+                                'balance',
+                                'stock',
+                                'prj_code',
+                                'supplier',
+                                'parts_name',
+                                'parts_number',
+                                'sell_price_cur',
+                                'sell_price',
+                                'buy_price_cur',
+                                'buy_price',
+                                'customer',
+                                'user',
+                                'date_created'
+                                ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'order_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response 
+            
         # 10. Order_No and order_date_s and order_date_e
         elif input_prj_code == "" and input_order_number != "" and input_order_date_s != "" and input_order_date_e != "":
             order_date_s = pd.to_datetime(input_order_date_s).floor('D')
@@ -698,8 +1067,47 @@ class OrderInfoView(LoginRequiredMixin,View):
                 'order_date_s':input_order_date_s,
                 'order_date_e':input_order_date_e}
             print('10')
-            return render(request, 'omsapp/order_info.html',context)
-        
+            if export is None:
+                return render(request, 'omsapp/order_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(order_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2', 
+                            best_fit=[
+                                'id',
+                                'order_number',
+                                'item_code',
+                                'quantity',
+                                'supplier_delivery_date',
+                                'customer_delivery_date',
+                                'shipment_qty',
+                                'acceptance_qty',
+                                'balance',
+                                'stock',
+                                'prj_code',
+                                'supplier',
+                                'parts_name',
+                                'parts_number',
+                                'sell_price_cur',
+                                'sell_price',
+                                'buy_price_cur',
+                                'buy_price',
+                                'customer',
+                                'user',
+                                'date_created'
+                                ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'order_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response 
+            
         # 11. No input
         elif input_prj_code == "" and input_order_number == "" and input_order_date_s == "" and input_order_date_e == "":
             order_list = data2 
@@ -710,13 +1118,52 @@ class OrderInfoView(LoginRequiredMixin,View):
                 'order_date_s':input_order_date_s,
                 'order_date_e':input_order_date_e}
             print('11')
-            print(order_list)
             
-            return render(request, 'omsapp/order_info.html',context)
-        
+            if export is None:
+                return render(request, 'omsapp/order_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(order_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2', 
+                            best_fit=[
+                                'id',
+                                'order_number',
+                                'item_code',
+                                'quantity',
+                                'supplier_delivery_date',
+                                'customer_delivery_date',
+                                'shipment_qty',
+                                'acceptance_qty',
+                                'balance',
+                                'stock',
+                                'prj_code',
+                                'supplier',
+                                'parts_name',
+                                'parts_number',
+                                'sell_price_cur',
+                                'sell_price',
+                                'buy_price_cur',
+                                'buy_price',
+                                'customer',
+                                'user',
+                                'date_created'
+                                ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'order_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response 
+
+                            
         # 12. default
         elif input_prj_code is None and input_order_number is None and input_order_date_s is None and input_order_date_e is None:
-            print('12')            
+            print('12')
             return render(request, 'omsapp/order_info.html')
         
         # 13. All Input 
@@ -734,7 +1181,46 @@ class OrderInfoView(LoginRequiredMixin,View):
                 'order_date_s':input_order_date_s,
                 'order_date_e':input_order_date_e}
             print('13')
-            return render(request, 'omsapp/order_info.html',context)
+            if export is None:
+                return render(request, 'omsapp/order_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(order_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2', 
+                            best_fit=[
+                                'id',
+                                'order_number',
+                                'item_code',
+                                'quantity',
+                                'supplier_delivery_date',
+                                'customer_delivery_date',
+                                'shipment_qty',
+                                'acceptance_qty',
+                                'balance',
+                                'stock',
+                                'prj_code',
+                                'supplier',
+                                'parts_name',
+                                'parts_number',
+                                'sell_price_cur',
+                                'sell_price',
+                                'buy_price_cur',
+                                'buy_price',
+                                'customer',
+                                'user',
+                                'date_created'
+                                ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'order_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response 
 
 ### Acceptance Info ########################### 
 class AcceptanceInfoView(LoginRequiredMixin,View):
@@ -742,7 +1228,9 @@ class AcceptanceInfoView(LoginRequiredMixin,View):
         input_prj_code = request.GET.get('prjCode', None)
         input_order_number = request.GET.get('orderNum', None)
         input_accept_date_s = request.GET.get('acceptDateS', None)
-        input_accept_date_e = request.GET.get('acceptDateE', None)    
+        input_accept_date_e = request.GET.get('acceptDateE', None)
+        export = request.GET.get('export', None)
+  
 
         rf_acceptance = read_frame(Acceptance.objects.all().order_by('id'))
 
@@ -767,7 +1255,7 @@ class AcceptanceInfoView(LoginRequiredMixin,View):
         data2 = data1
         
         data2['amount'] = data2['acceptance_qty'] * data2['buy_price']
-        
+        data2 = data2.loc[:,['id', 'user','order_number','item_code','acceptance_qty','accepted_date','prj_code','parts_name','parts_number','buy_price_cur','buy_price','amount','supplier']]
         print(data2)
 
 
@@ -781,8 +1269,39 @@ class AcceptanceInfoView(LoginRequiredMixin,View):
                 'accept_date_s':input_accept_date_s,
                 'accept_date_e':input_accept_date_e
                 }
-            print('1')
-            return render(request, 'omsapp/acceptance_info.html',context)
+            print('1')            
+            if export is None:
+                return render(request, 'omsapp/acceptance_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(accept_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2', 
+                            best_fit=[
+                                'id',
+                                'user',
+                                'order_number',
+                                'item_code',
+                                'acceptance_qty',
+                                'accepted_date',
+                                'prj_code',
+                                'supplier',
+                                'parts_name',
+                                'parts_number',
+                                'buy_price_cur',
+                                'buy_price',
+                                'amount'
+                            ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'acceptance_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response 
             
         # 2. Order_No. only
         elif input_prj_code == "" and input_order_number != "" and input_accept_date_s == "" and input_accept_date_e == "":
@@ -795,8 +1314,39 @@ class AcceptanceInfoView(LoginRequiredMixin,View):
                 'accept_date_e':input_accept_date_e
                 }
             print('2')
-            return render(request, 'omsapp/acceptance_info.html',context)
-            
+            if export is None:
+                return render(request, 'omsapp/acceptance_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(accept_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2', 
+                            best_fit=[
+                                'id',
+                                'user',
+                                'order_number',
+                                'item_code',
+                                'acceptance_qty',
+                                'accepted_date',
+                                'prj_code',
+                                'supplier',
+                                'parts_name',
+                                'parts_number',
+                                'buy_price_cur',
+                                'buy_price',
+                                'amount'
+                            ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'acceptance_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response  
+                        
         # 3. order_date_s only
         elif input_prj_code == "" and input_order_number == "" and input_accept_date_s != "" and input_accept_date_e == "":
             accept_date_s = pd.to_datetime(input_accept_date_s).floor('D')
@@ -809,8 +1359,39 @@ class AcceptanceInfoView(LoginRequiredMixin,View):
                 'accept_date_e':input_accept_date_e
                 }
             print('3')
-            return render(request, 'omsapp/acceptance_info.html',context)
-            
+            if export is None:
+                return render(request, 'omsapp/acceptance_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(accept_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2', 
+                            best_fit=[
+                                'id',
+                                'user',
+                                'order_number',
+                                'item_code',
+                                'acceptance_qty',
+                                'accepted_date',
+                                'prj_code',
+                                'supplier',
+                                'parts_name',
+                                'parts_number',
+                                'buy_price_cur',
+                                'buy_price',
+                                'amount'
+                            ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'acceptance_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response 
+                        
         # 4. order_date_e only
         elif input_prj_code == "" and input_order_number == "" and input_accept_date_s == "" and input_accept_date_e != "":
             accept_list = data2[data2['accepted_date']<=accept_date_s]
@@ -822,8 +1403,39 @@ class AcceptanceInfoView(LoginRequiredMixin,View):
                 'accept_date_e':input_accept_date_e
                 }
             print('4')
-            return render(request, 'omsapp/acceptance_info.html',context)
-            
+            if export is None:
+                return render(request, 'omsapp/acceptance_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(accept_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2', 
+                            best_fit=[
+                                'id',
+                                'user',
+                                'order_number',
+                                'item_code',
+                                'acceptance_qty',
+                                'accepted_date',
+                                'prj_code',
+                                'supplier',
+                                'parts_name',
+                                'parts_number',
+                                'buy_price_cur',
+                                'buy_price',
+                                'amount'
+                            ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'acceptance_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response 
+                        
         # 5. order_date_s and order_date_e
         elif input_prj_code == "" and input_order_number == "" and input_accept_date_s != "" and input_accept_date_e != "":
             accept_date_s = pd.to_datetime(input_accept_date_s).floor('D')
@@ -838,8 +1450,39 @@ class AcceptanceInfoView(LoginRequiredMixin,View):
                 'accept_date_e':input_accept_date_e
                 }
             print('5')
-            return render(request, 'omsapp/acceptance_info.html',context)
-        
+            if export is None:
+                return render(request, 'omsapp/acceptance_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(accept_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2', 
+                            best_fit=[
+                                'id',
+                                'user',
+                                'order_number',
+                                'item_code',
+                                'acceptance_qty',
+                                'accepted_date',
+                                'prj_code',
+                                'supplier',
+                                'parts_name',
+                                'parts_number',
+                                'buy_price_cur',
+                                'buy_price',
+                                'amount'
+                            ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'acceptance_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response 
+                    
         # 6. prj_code and Order_No
         elif input_prj_code != "" and input_order_number != "" and input_accept_date_s == "" and input_accept_date_e == "":
             data3 = data2[data2['prj_code']==input_prj_code]
@@ -852,8 +1495,39 @@ class AcceptanceInfoView(LoginRequiredMixin,View):
                 'accept_date_e':input_accept_date_e
                 }
             print('6')      
-            return render(request, 'omsapp/acceptance_info.html',context)
-        
+            if export is None:
+                return render(request, 'omsapp/acceptance_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(accept_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2', 
+                            best_fit=[
+                                'id',
+                                'user',
+                                'order_number',
+                                'item_code',
+                                'acceptance_qty',
+                                'accepted_date',
+                                'prj_code',
+                                'supplier',
+                                'parts_name',
+                                'parts_number',
+                                'buy_price_cur',
+                                'buy_price',
+                                'amount'
+                            ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'acceptance_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response 
+                    
         # 7. prj_code and order_date_s
         elif input_prj_code != "" and input_order_number == "" and input_accept_date_s != "" and input_accept_date_e == "":
             accept_date_s = pd.to_datetime(input_accept_date_s).floor('D')
@@ -867,8 +1541,39 @@ class AcceptanceInfoView(LoginRequiredMixin,View):
                 'accept_date_e':input_accept_date_e
                 }
             print('7')      
-            return render(request, 'omsapp/acceptance_info.html',context)
-            
+            if export is None:
+                return render(request, 'omsapp/acceptance_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(accept_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2', 
+                            best_fit=[
+                                'id',
+                                'user',
+                                'order_number',
+                                'item_code',
+                                'acceptance_qty',
+                                'accepted_date',
+                                'prj_code',
+                                'supplier',
+                                'parts_name',
+                                'parts_number',
+                                'buy_price_cur',
+                                'buy_price',
+                                'amount'
+                            ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'acceptance_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response 
+                        
         # 8. prj_code and order_date_s and order_date_e
         elif input_prj_code != "" and input_order_number == "" and input_accept_date_s != "" and input_accept_date_e != "":
             accept_date_s = pd.to_datetime(input_accept_date_s).floor('D')
@@ -884,8 +1589,39 @@ class AcceptanceInfoView(LoginRequiredMixin,View):
                 'accept_date_e':input_accept_date_e
                 }
             print('8')      
-            return render(request, 'omsapp/acceptance_info.html',context)
-        
+            if export is None:
+                return render(request, 'omsapp/acceptance_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(accept_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2', 
+                            best_fit=[
+                                'id',
+                                'user',
+                                'order_number',
+                                'item_code',
+                                'acceptance_qty',
+                                'accepted_date',
+                                'prj_code',
+                                'supplier',
+                                'parts_name',
+                                'parts_number',
+                                'buy_price_cur',
+                                'buy_price',
+                                'amount'
+                            ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'acceptance_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response 
+                    
         # 9. Order_No and order_date_s
         elif input_prj_code == "" and input_order_number != "" and input_accept_date_s != "" and input_accept_date_e == "":
             accept_date_s = pd.to_datetime(input_order_date_s).floor('D')
@@ -899,8 +1635,39 @@ class AcceptanceInfoView(LoginRequiredMixin,View):
                 'accept_date_e':input_accept_date_e
                 }
             print('9')      
-            return render(request, 'omsapp/acceptance_info.html',context)
-        
+            if export is None:
+                return render(request, 'omsapp/acceptance_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(accept_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2', 
+                            best_fit=[
+                                'id',
+                                'user',
+                                'order_number',
+                                'item_code',
+                                'acceptance_qty',
+                                'accepted_date',
+                                'prj_code',
+                                'supplier',
+                                'parts_name',
+                                'parts_number',
+                                'buy_price_cur',
+                                'buy_price',
+                                'amount'
+                            ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'acceptance_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response 
+                    
         # 10. Order_No and order_date_s and order_date_e
         elif input_prj_code == "" and input_order_number != "" and input_accept_date_s != "" and input_accept_date_e != "":
             accept_date_s = pd.to_datetime(input_order_date_s).floor('D')
@@ -916,7 +1683,39 @@ class AcceptanceInfoView(LoginRequiredMixin,View):
                 'accept_date_e':input_accept_date_e
                 }
             print('10')      
-            return render(request, 'omsapp/acceptance_info.html',context)
+            if export is None:
+                return render(request, 'omsapp/acceptance_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(accept_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2', 
+                            best_fit=[
+                                'id',
+                                'user',
+                                'order_number',
+                                'item_code',
+                                'acceptance_qty',
+                                'accepted_date',
+                                'prj_code',
+                                'supplier',
+                                'parts_name',
+                                'parts_number',
+                                'buy_price_cur',
+                                'buy_price',
+                                'amount'
+                            ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'acceptance_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response 
+                    
         
         # 11. No input
         elif input_prj_code == "" and input_order_number == "" and input_accept_date_s == "" and input_accept_date_e == "":
@@ -928,9 +1727,40 @@ class AcceptanceInfoView(LoginRequiredMixin,View):
                 'accept_date_s':input_accept_date_s,
                 'accept_date_e':input_accept_date_e
                 }
-            print('11')      
-            return render(request, 'omsapp/acceptance_info.html',context)
-        
+            print('11')
+            if export is None:
+                return render(request, 'omsapp/acceptance_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(accept_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2', 
+                            best_fit=[
+                                'id',
+                                'user',
+                                'order_number',
+                                'item_code',
+                                'acceptance_qty',
+                                'accepted_date',
+                                'prj_code',
+                                'supplier',
+                                'parts_name',
+                                'parts_number',
+                                'buy_price_cur',
+                                'buy_price',
+                                'amount'
+                            ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'acceptance_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response 
+                    
         # 12. default
         elif input_prj_code is None and input_order_number is None and input_accept_date_s is None and input_accept_date_e is None:
             print('12')            
@@ -952,15 +1782,47 @@ class AcceptanceInfoView(LoginRequiredMixin,View):
                 'accept_date_e':input_accept_date_e
                 }
             print('13')      
-            return render(request, 'omsapp/acceptance_info.html',context)
-
+            if export is None:
+                    return render(request, 'omsapp/acceptance_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(accept_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2', 
+                            best_fit=[
+                                'id',
+                                'user',
+                                'order_number',
+                                'item_code',
+                                'acceptance_qty',
+                                'accepted_date',
+                                'prj_code',
+                                'supplier',
+                                'parts_name',
+                                'parts_number',
+                                'buy_price_cur',
+                                'buy_price',
+                                'amount'
+                            ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'acceptance_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response  
+            
 ### Shipment Info ########################### 
 class ShipmentInfoView(LoginRequiredMixin,View):
     def get(self, request):   
         input_prj_code = request.GET.get('prjCode', None)
         input_order_number = request.GET.get('orderNum', None)
         input_ship_date_s = request.GET.get('shipDateS', None)
-        input_ship_date_e = request.GET.get('shipDateE', None)    
+        input_ship_date_e = request.GET.get('shipDateE', None) 
+        export = request.GET.get('export', None)
 
         rf_shipment = read_frame(Shipment.objects.all().order_by('id'))
 
@@ -992,7 +1854,7 @@ class ShipmentInfoView(LoginRequiredMixin,View):
         data2 = data1
         
         data2['amount'] = data2['shipment_qty'] * data2['sell_price']
-        
+        data2 = data2.loc[:,['id','user','order_number','item_code','shipment_qty','shipped_date','prj_code','parts_name','parts_number','sell_price_cur','sell_price', 'amount','customer']]
         print(data2)
 
 
@@ -1007,7 +1869,39 @@ class ShipmentInfoView(LoginRequiredMixin,View):
                 'ship_date_e':input_ship_date_e
                 }
             print('1')
-            return render(request, 'omsapp/shipment_info.html',context)
+            if export is None:
+                    return render(request, 'omsapp/shipment_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(ship_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2',
+                            best_fit=[
+                                'id',
+                                'user',
+                                'order_number',
+                                'item_code',
+                                'shipment_qty',
+                                'shipped_date',
+                                'prj_code',
+                                'parts_name',
+                                'parts_number',
+                                'sell_price_cur',
+                                'sell_price',
+                                'customer',
+                                'amount'
+                            ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'shipment_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response 
+
             
         # 2. Order_No. only
         elif input_prj_code == "" and input_order_number != "" and input_ship_date_s == "" and input_ship_date_e == "":
@@ -1020,7 +1914,38 @@ class ShipmentInfoView(LoginRequiredMixin,View):
                 'ship_date_e':input_ship_date_e
                 }
             print('2')
-            return render(request, 'omsapp/shipment_info.html',context)
+            if export is None:
+                    return render(request, 'omsapp/shipment_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(ship_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2',
+                            best_fit=[
+                                'id',
+                                'user',
+                                'order_number',
+                                'item_code',
+                                'shipment_qty',
+                                'shipped_date',
+                                'prj_code',
+                                'parts_name',
+                                'parts_number',
+                                'sell_price_cur',
+                                'sell_price',
+                                'customer',
+                                'amount'
+                            ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'shipment_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response  
             
         # 3. order_date_s only
         elif input_prj_code == "" and input_order_number == "" and input_ship_date_s != "" and input_ship_date_e == "":
@@ -1034,7 +1959,38 @@ class ShipmentInfoView(LoginRequiredMixin,View):
                 'ship_date_e':input_ship_date_e
                 }
             print('3')
-            return render(request, 'omsapp/shipment_info.html',context)
+            if export is None:
+                    return render(request, 'omsapp/shipment_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(ship_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2',
+                            best_fit=[
+                                'id',
+                                'user',
+                                'order_number',
+                                'item_code',
+                                'shipment_qty',
+                                'shipped_date',
+                                'prj_code',
+                                'parts_name',
+                                'parts_number',
+                                'sell_price_cur',
+                                'sell_price',
+                                'customer',
+                                'amount'
+                            ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'shipment_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response  
             
         # 4. order_date_e only
         elif input_prj_code == "" and input_order_number == "" and input_ship_date_s == "" and input_ship_date_e != "":
@@ -1047,7 +2003,38 @@ class ShipmentInfoView(LoginRequiredMixin,View):
                 'ship_date_e':input_ship_date_e
                 }
             print('4')
-            return render(request, 'omsapp/shipment_info.html',context)
+            if export is None:
+                    return render(request, 'omsapp/shipment_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(ship_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2',
+                            best_fit=[
+                                'id',
+                                'user',
+                                'order_number',
+                                'item_code',
+                                'shipment_qty',
+                                'shipped_date',
+                                'prj_code',
+                                'parts_name',
+                                'parts_number',
+                                'sell_price_cur',
+                                'sell_price',
+                                'customer',
+                                'amount'
+                            ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'shipment_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response  
             
         # 5. order_date_s and order_date_e
         elif input_prj_code == "" and input_order_number == "" and input_ship_date_s != "" and input_ship_date_e != "":
@@ -1063,7 +2050,38 @@ class ShipmentInfoView(LoginRequiredMixin,View):
                 'ship_date_e':input_ship_date_e
                 }
             print('5')
-            return render(request, 'omsapp/shipment_info.html',context)
+            if export is None:
+                    return render(request, 'omsapp/shipment_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(ship_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2',
+                            best_fit=[
+                                'id',
+                                'user',
+                                'order_number',
+                                'item_code',
+                                'shipment_qty',
+                                'shipped_date',
+                                'prj_code',
+                                'parts_name',
+                                'parts_number',
+                                'sell_price_cur',
+                                'sell_price',
+                                'customer',
+                                'amount'
+                            ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'shipment_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response  
         
         # 6. prj_code and Order_No
         elif input_prj_code != "" and input_order_number != "" and input_ship_date_s == "" and input_ship_date_e == "":
@@ -1077,7 +2095,38 @@ class ShipmentInfoView(LoginRequiredMixin,View):
                 'ship_date_e':input_ship_date_e
                 }
             print('6')      
-            return render(request, 'omsapp/shipment_info.html',context)
+            if export is None:
+                    return render(request, 'omsapp/shipment_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(ship_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2',
+                            best_fit=[
+                                'id',
+                                'user',
+                                'order_number',
+                                'item_code',
+                                'shipment_qty',
+                                'shipped_date',
+                                'prj_code',
+                                'parts_name',
+                                'parts_number',
+                                'sell_price_cur',
+                                'sell_price',
+                                'customer',
+                                'amount'
+                            ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'shipment_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response  
         
         # 7. prj_code and order_date_s
         elif input_prj_code != "" and input_order_number == "" and input_ship_date_s != "" and input_ship_date_e == "":
@@ -1092,7 +2141,38 @@ class ShipmentInfoView(LoginRequiredMixin,View):
                 'ship_date_e':input_ship_date_e
                 }
             print('7')      
-            return render(request, 'omsapp/shipment_info.html',context)
+            if export is None:
+                    return render(request, 'omsapp/shipment_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(ship_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2',
+                            best_fit=[
+                                'id',
+                                'user',
+                                'order_number',
+                                'item_code',
+                                'shipment_qty',
+                                'shipped_date',
+                                'prj_code',
+                                'parts_name',
+                                'parts_number',
+                                'sell_price_cur',
+                                'sell_price',
+                                'customer',
+                                'amount'
+                            ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'shipment_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response  
             
         # 8. prj_code and order_date_s and order_date_e
         elif input_prj_code != "" and input_order_number == "" and input_ship_date_s != "" and input_ship_date_e != "":
@@ -1109,7 +2189,38 @@ class ShipmentInfoView(LoginRequiredMixin,View):
                 'ship_date_e':input_ship_date_e
                 }
             print('8')      
-            return render(request, 'omsapp/shipment_info.html',context)
+            if export is None:
+                    return render(request, 'omsapp/shipment_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(ship_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2',
+                            best_fit=[
+                                'id',
+                                'user',
+                                'order_number',
+                                'item_code',
+                                'shipment_qty',
+                                'shipped_date',
+                                'prj_code',
+                                'parts_name',
+                                'parts_number',
+                                'sell_price_cur',
+                                'sell_price',
+                                'customer',
+                                'amount'
+                            ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'shipment_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response  
         
         # 9. Order_No and order_date_s
         elif input_prj_code == "" and input_order_number != "" and input_ship_date_s != "" and input_ship_date_e == "":
@@ -1124,7 +2235,38 @@ class ShipmentInfoView(LoginRequiredMixin,View):
                 'ship_date_e':input_ship_date_e
                 }
             print('9')      
-            return render(request, 'omsapp/shipment_info.html',context)
+            if export is None:
+                    return render(request, 'omsapp/shipment_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(ship_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2',
+                            best_fit=[
+                                'id',
+                                'user',
+                                'order_number',
+                                'item_code',
+                                'shipment_qty',
+                                'shipped_date',
+                                'prj_code',
+                                'parts_name',
+                                'parts_number',
+                                'sell_price_cur',
+                                'sell_price',
+                                'customer',
+                                'amount'
+                            ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'shipment_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response  
         
         # 10. Order_No and order_date_s and order_date_e
         elif input_prj_code == "" and input_order_number != "" and input_ship_date_s != "" and input_ship_date_e != "":
@@ -1141,7 +2283,38 @@ class ShipmentInfoView(LoginRequiredMixin,View):
                 'ship_date_e':input_ship_date_e
                 }
             print('10')      
-            return render(request, 'omsapp/shipment_info.html',context)
+            if export is None:
+                    return render(request, 'omsapp/shipment_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(ship_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2',
+                            best_fit=[
+                                'id',
+                                'user',
+                                'order_number',
+                                'item_code',
+                                'shipment_qty',
+                                'shipped_date',
+                                'prj_code',
+                                'parts_name',
+                                'parts_number',
+                                'sell_price_cur',
+                                'sell_price',
+                                'customer',
+                                'amount'
+                            ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'shipment_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response  
         
         # 11. No input
         elif input_prj_code == "" and input_order_number == "" and input_ship_date_s == "" and input_ship_date_e == "":
@@ -1154,7 +2327,39 @@ class ShipmentInfoView(LoginRequiredMixin,View):
                 'ship_date_e':input_ship_date_e
                 }
             print('11')      
-            return render(request, 'omsapp/shipment_info.html',context)
+            if export is None:
+                    return render(request, 'omsapp/shipment_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(ship_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2',
+                            best_fit=[
+                                'id',
+                                'user',
+                                'order_number',
+                                'item_code',
+                                'shipment_qty',
+                                'shipped_date',
+                                'prj_code',
+                                'parts_name',
+                                'parts_number',
+                                'sell_price_cur',
+                                'sell_price',
+                                'customer',
+                                'amount'
+                            ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'shipment_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response  
+
         
         # 12. default
         elif input_prj_code is None and input_order_number is None and input_ship_date_s is None and input_ship_date_e is None:
@@ -1177,7 +2382,38 @@ class ShipmentInfoView(LoginRequiredMixin,View):
                 'ship_date_e':input_ship_date_e
                 }
             print('13')      
-            return render(request, 'omsapp/shipment_info.html',context)
+            if export is None:
+                    return render(request, 'omsapp/shipment_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(ship_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2',
+                            best_fit=[
+                                'id',
+                                'user',
+                                'order_number',
+                                'item_code',
+                                'shipment_qty',
+                                'shipped_date',
+                                'prj_code',
+                                'parts_name',
+                                'parts_number',
+                                'sell_price_cur',
+                                'sell_price',
+                                'customer',
+                                'amount'
+                            ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'shipment_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response  
 
 ### Inventory Info ########################### 
 class ItemInfoView(LoginRequiredMixin,View):
@@ -1309,7 +2545,6 @@ class ItemInfoView(LoginRequiredMixin,View):
 
 
 ### Admin Only ####################################### 
-
 decorators = [admin_only]
 
 @method_decorator(decorators, name='dispatch')
@@ -1453,3 +2688,6 @@ class ProjectDeleteView(LoginRequiredMixin,DeleteView):
 @method_decorator(decorators, name='dispatch')     
 class ProjectListView(LoginRequiredMixin,ListView):
     model = Project
+    
+
+

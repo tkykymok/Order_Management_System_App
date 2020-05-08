@@ -11,17 +11,16 @@
             <div>
                 <form class="" method="POST" action="{% url 'login' %}">{% csrf_token %}
                     {% bootstrap_form form %}
-                    <button class="btn btn-info btn-block" width="100" type="submit" name="Login">login</button>
+                    <button id="login" class="btn btn-info btn-block" width="100" type="submit" name="Login">login</button>
                     <input type="hidden" name="next" value="{{ next }}" />
                 </form>
-                <!-- <div class="mt-2">Do you have an account? <a class="" href="">Sign Up</a></div> -->
             </div>
         </div>
     </div>
+    <div class="row row justify-content-center mt-3">
+        <div class="col-2"><button id="adminUser" class="btn btn-primary btn-block" width="100" type="button" name="adminUser">as admin_user</button></div>
+        <div class="col-2"><button id="generalUser" class="btn btn-success btn-block" width="100" type="button" name="generalUser">as general_user</button></div>
+    </div>
 </div>
-
-
-
- 
 
 {% endblock %}
