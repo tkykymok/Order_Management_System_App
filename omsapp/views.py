@@ -16,7 +16,7 @@ from django.contrib.auth.views import LoginView
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView
 from .forms import CustomerCreateForm, SupplierCreateForm, ProjectCreateForm, TaskForm
-from datetime import datetime
+import datetime
 
 from django.http import JsonResponse
 from django.forms.models import model_to_dict
@@ -81,12 +81,12 @@ class OrderEntryView(LoginRequiredMixin,View):
 
 class PrjCodeGet(LoginRequiredMixin,View):
     def post(self, request):
-        prj_code_get = request.POST.getlist('prjCode', None)
-        prj_code = Project.objects.get(prj_code = prj_code_get[0])
-        customer_info = prj_code.customer
-        person_incharge = request.user
-        return JsonResponse({'customer_info':model_to_dict(customer_info), 'person_incharge':model_to_dict(person_incharge)}, status=200)
-    
+        prj_code_get = request.POST.get('prjCode', None)
+        rf_prj_code = read_frame(Project.objects.filter(prj_code = prj_code_get))
+        data1 = rf_prj_code.to_dict()
+        return JsonResponse({'customer_info':data1}, status=200)
+  
+        
 class OrderNumberCreate(LoginRequiredMixin,View):
     def post(self, request):
         user = request.user
@@ -142,13 +142,21 @@ class OrderUpdateDataGet(LoginRequiredMixin,View):
         
         rf_item = read_frame(Item.objects.all(),fieldnames=[
             'item_code',
+            'prj_code',
             'parts_name', 
             'parts_number', 
             'sell_price',
             'buy_price'
         ])
         
+        rf_project = read_frame(Project.objects.all(), fieldnames=[
+            'prj_code',
+            'customer'
+        ])
+        
         data1 = pd.merge(rf_order, rf_item, on='item_code', how='left')
+        data1 = pd.merge(data1, rf_project, on='prj_code', how='inner')
+        data2 = pd.merge(data1, rf_order, on='order_number', how='inner')
         
         data2 = data1.to_dict()
     
@@ -156,7 +164,6 @@ class OrderUpdateDataGet(LoginRequiredMixin,View):
     
 class OrderUpdateConfirm(LoginRequiredMixin,View):
     def post(self, request):
-        input_order_number = request.POST.get('orderNumber', None)
         order_id = request.POST.getlist('orderId', None)
         items = request.POST.getlist('item', None)
         qtys = request.POST.getlist('qty', None)
@@ -288,7 +295,6 @@ class ShipmentUpdateDataGet(LoginRequiredMixin,View):
   
         data1 = pd.merge(rf_ship_order, rf_item, on='item_code', how='left')
         data1 = pd.merge(data1, rf_project, on='prj_code', how='inner')
-        print(data1)
         data2 = pd.merge(data1, rf_order, on='order_number', how='inner')
         
         data3 = data2.to_dict()
@@ -536,9 +542,10 @@ class OrderInfoView(LoginRequiredMixin,View):
         input_prj_code = request.GET.get('prjCode', None)
         input_order_number = request.GET.get('orderNum', None)
         input_order_date_s = request.GET.get('orderDateS', None)
-        input_order_date_e = request.GET.get('orderDateE', None)    
+        input_order_date_e = request.GET.get('orderDateE', None) 
         export = request.GET.get('export', None)
-    
+        
+        
         rf_order = read_frame(Order.objects.all().order_by('id'))
      
         rf_item = read_frame(Item.objects.all(),fieldnames=[
@@ -737,6 +744,7 @@ class OrderInfoView(LoginRequiredMixin,View):
             
         # 4. order_date_e only
         elif input_prj_code == "" and input_order_number == "" and input_order_date_s == "" and input_order_date_e != "":
+            order_date_e = pd.to_datetime(input_order_date_e).floor('D') + datetime.timedelta(days=1)
             order_list = data2[data2['date_created']<=order_date_e]
             context = {
                 'order_list':order_list, 
@@ -745,6 +753,7 @@ class OrderInfoView(LoginRequiredMixin,View):
                 'order_date_s':input_order_date_s,
                 'order_date_e':input_order_date_e}
             print('4')
+            
             if export is None:
                 return render(request, 'omsapp/order_info.html',context)
             else:
@@ -789,7 +798,7 @@ class OrderInfoView(LoginRequiredMixin,View):
         # 5. order_date_s and order_date_e
         elif input_prj_code == "" and input_order_number == "" and input_order_date_s != "" and input_order_date_e != "":
             order_date_s = pd.to_datetime(input_order_date_s).floor('D')
-            order_date_e = pd.to_datetime(input_order_date_e).floor('D')
+            order_date_e = pd.to_datetime(input_order_date_e).floor('D') + datetime.timedelta(days=1)
             data3 = data2[data2['date_created']>=order_date_s]
             order_list = data3[data3['date_created']<=order_date_e]
             context = {
@@ -945,10 +954,63 @@ class OrderInfoView(LoginRequiredMixin,View):
                 response['Content-Disposition'] = 'attachment; filename=' + file_name
                 return response 
             
+        # 14. prj_code and order_date_e *added
+        elif input_prj_code != "" and input_order_number == "" and input_order_date_s == "" and input_order_date_e != "":
+            order_date_e = pd.to_datetime(input_order_date_e).floor('D') + datetime.timedelta(days=1)
+            data3 = data2[data2['prj_code']==input_prj_code]
+            order_list = data3[data3['date_created']<=order_date_e]
+            context = {
+                'order_list':order_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'order_date_s':input_order_date_s,
+                'order_date_e':input_order_date_e}
+            print('14')
+            if export is None:
+                return render(request, 'omsapp/order_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(order_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2', 
+                            best_fit=[
+                                'id',
+                                'order_number',
+                                'item_code',
+                                'quantity',
+                                'supplier_delivery_date',
+                                'customer_delivery_date',
+                                'shipment_qty',
+                                'acceptance_qty',
+                                'balance',
+                                'stock',
+                                'prj_code',
+                                'supplier',
+                                'parts_name',
+                                'parts_number',
+                                'sell_price_cur',
+                                'sell_price',
+                                'buy_price_cur',
+                                'buy_price',
+                                'customer',
+                                'user',
+                                'date_created'
+                                ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'order_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response 
+            
         # 8. prj_code and order_date_s and order_date_e
         elif input_prj_code != "" and input_order_number == "" and input_order_date_s != "" and input_order_date_e != "":
             order_date_s = pd.to_datetime(input_order_date_s).floor('D')
-            order_date_e = pd.to_datetime(input_order_date_e).floor('D')
+            order_date_e = pd.to_datetime(input_order_date_e).floor('D') + + datetime.timedelta(days=1)
             data3 = data2[data2['prj_code']==input_prj_code]
             data4 = data3[data3['date_created']>=order_date_s]
             order_list = data4[data4['date_created']<=order_date_e]
@@ -1056,7 +1118,7 @@ class OrderInfoView(LoginRequiredMixin,View):
         # 10. Order_No and order_date_s and order_date_e
         elif input_prj_code == "" and input_order_number != "" and input_order_date_s != "" and input_order_date_e != "":
             order_date_s = pd.to_datetime(input_order_date_s).floor('D')
-            order_date_e = pd.to_datetime(input_order_date_e).floor('D')
+            order_date_e = pd.to_datetime(input_order_date_e).floor('D') + datetime.timedelta(days=1)
             data3 = data2[data2['order_number']==input_order_number]
             data4 = data3[data3['date_created']>=order_date_s]
             order_list = data4[data4['date_created']<=order_date_e]
@@ -1169,7 +1231,7 @@ class OrderInfoView(LoginRequiredMixin,View):
         # 13. All Input 
         else:
             order_date_s = pd.to_datetime(input_order_date_s).floor('D')
-            order_date_e = pd.to_datetime(input_order_date_e).floor('D')
+            order_date_e = pd.to_datetime(input_order_date_e).floor('D') + datetime.timedelta(days=1)
             data3 = data2[data2['prj_code']==input_prj_code]
             data4 = data3[data3['order_number']==input_order_number]
             data5 = data4[data4['date_created']>=order_date_s]
@@ -1256,7 +1318,7 @@ class AcceptanceInfoView(LoginRequiredMixin,View):
         
         data2['amount'] = data2['acceptance_qty'] * data2['buy_price']
         data2 = data2.loc[:,['id', 'user','order_number','item_code','acceptance_qty','accepted_date','prj_code','parts_name','parts_number','buy_price_cur','buy_price','amount','supplier']]
-        print(data2)
+      
 
 
        # 1. prj_code only
@@ -1394,7 +1456,8 @@ class AcceptanceInfoView(LoginRequiredMixin,View):
                         
         # 4. order_date_e only
         elif input_prj_code == "" and input_order_number == "" and input_accept_date_s == "" and input_accept_date_e != "":
-            accept_list = data2[data2['accepted_date']<=accept_date_s]
+            accept_date_e = pd.to_datetime(input_accept_date_e).floor('D') + datetime.timedelta(days=1)
+            accept_list = data2[data2['accepted_date']<=accept_date_e]
             context = {
                 'accept_list':accept_list, 
                 'prj_code':input_prj_code, 
@@ -1439,7 +1502,7 @@ class AcceptanceInfoView(LoginRequiredMixin,View):
         # 5. order_date_s and order_date_e
         elif input_prj_code == "" and input_order_number == "" and input_accept_date_s != "" and input_accept_date_e != "":
             accept_date_s = pd.to_datetime(input_accept_date_s).floor('D')
-            accept_date_e = pd.to_datetime(input_accept_date_e).floor('D')
+            accept_date_e = pd.to_datetime(input_accept_date_e).floor('D') + datetime.timedelta(days=1)
             data3 = data2[data2['accepted_date']>=accept_date_s]
             accept_list = data3[data3['accepted_date']<=accept_date_e]
             context = {
@@ -1573,11 +1636,57 @@ class AcceptanceInfoView(LoginRequiredMixin,View):
                 response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
                 response['Content-Disposition'] = 'attachment; filename=' + file_name
                 return response 
+            
+        # 14. prj_code and order_date_e *added
+        elif input_prj_code != "" and input_order_number == "" and input_accept_date_s == "" and input_accept_date_e != "":
+            accept_date_e = pd.to_datetime(input_accept_date_e).floor('D') + datetime.timedelta(days=1)
+            data3 = data2[data2['prj_code']==input_prj_code]
+            accept_list = data3[data3['accepted_date']<=accept_date_s]
+            context = {
+                'accept_list':accept_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'accept_date_s':input_accept_date_s,
+                'accept_date_e':input_accept_date_e
+                }
+            print('14')      
+            if export is None:
+                return render(request, 'omsapp/acceptance_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(accept_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2', 
+                            best_fit=[
+                                'id',
+                                'user',
+                                'order_number',
+                                'item_code',
+                                'acceptance_qty',
+                                'accepted_date',
+                                'prj_code',
+                                'supplier',
+                                'parts_name',
+                                'parts_number',
+                                'buy_price_cur',
+                                'buy_price',
+                                'amount'
+                            ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'acceptance_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response 
                         
         # 8. prj_code and order_date_s and order_date_e
         elif input_prj_code != "" and input_order_number == "" and input_accept_date_s != "" and input_accept_date_e != "":
             accept_date_s = pd.to_datetime(input_accept_date_s).floor('D')
-            accept_date_e = pd.to_datetime(input_accept_date_e).floor('D')
+            accept_date_e = pd.to_datetime(input_accept_date_e).floor('D') + datetime.timedelta(days=1)
             data3 = data2[data2['prj_code']==input_prj_code]
             data4 = data3[data3['accepted_date']>=accept_date_s]
             accept_list = data4[data4['accepted_date']<=accept_date_e]
@@ -1671,7 +1780,7 @@ class AcceptanceInfoView(LoginRequiredMixin,View):
         # 10. Order_No and order_date_s and order_date_e
         elif input_prj_code == "" and input_order_number != "" and input_accept_date_s != "" and input_accept_date_e != "":
             accept_date_s = pd.to_datetime(input_order_date_s).floor('D')
-            accept_date_e = pd.to_datetime(input_order_date_e).floor('D')
+            accept_date_e = pd.to_datetime(input_order_date_e).floor('D') + datetime.timedelta(days=1)
             data3 = data2[data2['order_number']==input_order_number]
             data4 = data3[data3['accepted_date']>=accept_date_s]
             accept_list = data4[data4['accepted_date']<=accept_date_e]
@@ -1769,11 +1878,11 @@ class AcceptanceInfoView(LoginRequiredMixin,View):
         # 13. All Input 
         else:
             accept_date_s = pd.to_datetime(input_accept_date_s).floor('D')
-            accept_date_e = pd.to_datetime(input_accept_date_e).floor('D')
+            accept_date_e = pd.to_datetime(input_accept_date_e).floor('D') + datetime.timedelta(days=1)
             data3 = data2[data2['prj_code']==input_prj_code]
             data4 = data3[data3['order_number']==input_order_number]
             data5 = data4[data4['accepted_date']>=accept_date_s]
-            order_list = data5[data5['accepted_date']<=accept_date_e]
+            accept_list = data5[data5['accepted_date']<=accept_date_e]
             context = {
                 'accept_list':accept_list, 
                 'prj_code':input_prj_code, 
@@ -1855,7 +1964,7 @@ class ShipmentInfoView(LoginRequiredMixin,View):
         
         data2['amount'] = data2['shipment_qty'] * data2['sell_price']
         data2 = data2.loc[:,['id','user','order_number','item_code','shipment_qty','shipped_date','prj_code','parts_name','parts_number','sell_price_cur','sell_price', 'amount','customer']]
-        print(data2)
+
 
 
         # 1. prj_code only
@@ -1994,7 +2103,8 @@ class ShipmentInfoView(LoginRequiredMixin,View):
             
         # 4. order_date_e only
         elif input_prj_code == "" and input_order_number == "" and input_ship_date_s == "" and input_ship_date_e != "":
-            ship_list = data2[data2['shipped_date']<=ship_date_s]
+            ship_date_e = pd.to_datetime(input_ship_date_e).floor('D') + datetime.timedelta(days=1)
+            ship_list = data2[data2['shipped_date']<=ship_date_e]
             context = {
                 'ship_list':ship_list, 
                 'prj_code':input_prj_code, 
@@ -2039,7 +2149,7 @@ class ShipmentInfoView(LoginRequiredMixin,View):
         # 5. order_date_s and order_date_e
         elif input_prj_code == "" and input_order_number == "" and input_ship_date_s != "" and input_ship_date_e != "":
             ship_date_s = pd.to_datetime(input_ship_date_s).floor('D')
-            ship_date_e = pd.to_datetime(input_ship_date_e).floor('D')
+            ship_date_e = pd.to_datetime(input_ship_date_e).floor('D') + datetime.timedelta(days=1)
             data3 = data2[data2['shipped_date']>=ship_date_s]
             ship_list = data3[data3['shipped_date']<=ship_date_e]
             context = {
@@ -2174,10 +2284,56 @@ class ShipmentInfoView(LoginRequiredMixin,View):
                 response['Content-Disposition'] = 'attachment; filename=' + file_name
                 return response  
             
+        # 14. prj_code and order_date_e
+        elif input_prj_code != "" and input_order_number == "" and input_ship_date_s == "" and input_ship_date_e != "":
+            ship_date_e = pd.to_datetime(input_ship_date_e).floor('D') + datetime.timedelta(days=1)
+            data3 = data2[data2['prj_code']==input_prj_code]
+            ship_list = data3[data3['shipped_date']<=ship_date_e]
+            context = {
+                'ship_list':ship_list, 
+                'prj_code':input_prj_code, 
+                'order_number':input_order_number,
+                'ship_date_s':input_ship_date_s,
+                'ship_date_e':input_ship_date_e
+                }
+            print('14')      
+            if export is None:
+                    return render(request, 'omsapp/shipment_info.html',context)
+            else:
+                bio = BytesIO()
+                writer = StyleFrame.ExcelWriter(bio)
+                sf = StyleFrame(ship_list)
+                sf.to_excel(writer, 
+                            sheet_name='sheet1', 
+                            index=False, columns_and_rows_to_freeze='B2',
+                            best_fit=[
+                                'id',
+                                'user',
+                                'order_number',
+                                'item_code',
+                                'shipment_qty',
+                                'shipped_date',
+                                'prj_code',
+                                'parts_name',
+                                'parts_number',
+                                'sell_price_cur',
+                                'sell_price',
+                                'customer',
+                                'amount'
+                            ]
+                            )
+                writer.save()
+                bio.seek(0)
+                workbook = bio.read()
+                file_name = 'shipment_info.xlsx'
+                response = HttpResponse(workbook, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename=' + file_name
+                return response  
+            
         # 8. prj_code and order_date_s and order_date_e
         elif input_prj_code != "" and input_order_number == "" and input_ship_date_s != "" and input_ship_date_e != "":
             ship_date_s = pd.to_datetime(input_ship_date_s).floor('D')
-            ship_date_e = pd.to_datetime(input_ship_date_e).floor('D')
+            ship_date_e = pd.to_datetime(input_ship_date_e).floor('D') + datetime.timedelta(days=1)
             data3 = data2[data2['prj_code']==input_prj_code]
             data4 = data3[data3['shipped_date']>=ship_date_s]
             ship_list = data4[data4['shipped_date']<=ship_date_e]
@@ -2271,7 +2427,7 @@ class ShipmentInfoView(LoginRequiredMixin,View):
         # 10. Order_No and order_date_s and order_date_e
         elif input_prj_code == "" and input_order_number != "" and input_ship_date_s != "" and input_ship_date_e != "":
             ship_date_s = pd.to_datetime(input_ship_date_s).floor('D')
-            ship_date_e = pd.to_datetime(input_ship_date_e).floor('D')
+            ship_date_e = pd.to_datetime(input_ship_date_e).floor('D') + datetime.timedelta(days=1)
             data3 = data2[data2['order_number']==input_order_number]
             data4 = data3[data3['shipped_date']>=ship_date_s]
             ship_list = data4[data4['shipped_date']<=ship_date_e]
@@ -2369,11 +2525,11 @@ class ShipmentInfoView(LoginRequiredMixin,View):
         # 13. All Input 
         else:
             ship_date_s = pd.to_datetime(input_ship_date_s).floor('D')
-            ship_date_e = pd.to_datetime(input_ship_date_e).floor('D')
+            ship_date_e = pd.to_datetime(input_ship_date_e).floor('D') + datetime.timedelta(days=1)
             data3 = data2[data2['prj_code']==input_prj_code]
             data4 = data3[data3['order_number']==input_order_number]
             data5 = data4[data4['shipped_date']>=ship_date_s]
-            order_list = data5[data5['shipped_date']<=ship_date_e]
+            ship_list = data5[data5['shipped_date']<=ship_date_e]
             context = {
                 'ship_list':ship_list, 
                 'prj_code':input_prj_code, 
@@ -2429,12 +2585,9 @@ class ItemInfoView(LoginRequiredMixin,View):
             'customer'
         ])
 
-        data1 = pd.merge(rf_item, rf_project, on='prj_code', how='inner')
-            
+        data1 = pd.merge(rf_item, rf_project, on='prj_code', how='inner')    
         data1['amount'] = data1['stock'] * data1['buy_price']
         
-        
-        print(data1)
         
         # 1. Prj Code
         if input_prj_code != "" and input_item_code == "" and input_parts_num == "":
@@ -2582,14 +2735,11 @@ class ItemCreateView(LoginRequiredMixin,View):
         )
         
         new_item_code = Item.objects.latest('item_code').item_code
-        print(new_item_code)
         new_item = read_frame(Item.objects.filter(item_code=new_item_code))
-        print(new_item)
         data1 = new_item.to_dict()
         
         return JsonResponse({'new_item':data1}, status=200)
 
-@method_decorator(decorators, name='dispatch')
 class ItemUpdateView(LoginRequiredMixin,View):
     def get(self,request):
         item_id = request.GET.get('dataId', None)
@@ -2603,12 +2753,6 @@ class ItemUpdateView(LoginRequiredMixin,View):
         buy_price = request.POST.get('buyPrice', None)
         delete_check = request.POST.get('deleteCheckNum', None)
         update_item = Item.objects.get(id=item_id)
-        
-        print(item_id)
-        print(sell_price)
-        print(buy_price)
-        print(delete_check)
-        print(update_item)
         
         if delete_check == "0":  #update 
             update_item.sell_price=sell_price
@@ -2639,7 +2783,7 @@ class CustomerDeleteView(LoginRequiredMixin,DeleteView):
     model = Customer
     success_url = reverse_lazy("customer_info")
 
-@method_decorator(decorators, name='dispatch')
+
 class CustomerListView(LoginRequiredMixin,ListView):
     model = Customer
 
@@ -2662,7 +2806,7 @@ class SupplierDeleteView(LoginRequiredMixin,DeleteView):
     model = Supplier
     success_url = reverse_lazy("supplier_info")
 
-@method_decorator(decorators, name='dispatch')
+
 class SupplierListView(LoginRequiredMixin,ListView):
     model = Supplier
     
@@ -2685,7 +2829,7 @@ class ProjectDeleteView(LoginRequiredMixin,DeleteView):
     model = Project
     success_url = reverse_lazy("project_info")
 
-@method_decorator(decorators, name='dispatch')     
+  
 class ProjectListView(LoginRequiredMixin,ListView):
     model = Project
     
