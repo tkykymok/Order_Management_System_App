@@ -5,8 +5,8 @@
 
 <div class="container-fruid">
     <div class="row justify-content-center">
-        <div class="col-8">
-            <div class="ml-2 mt-3 mb-3"><h2>Main Menu</h2></div>
+        <div class="col-md-8">
+            <div class="mt-3 mb-3"><h2>Menu</h2></div>
             <hr>
             <div class="row pt-2">
                 <div class="col-4"><a class="btn btn-info btn-lg btn-block menubtn" href="{% url 'order_entry' %}" >Order Entry</a></div>
@@ -20,9 +20,21 @@
                 <div class="col-4"><a class="btn btn-info btn-lg btn-block menubtn" href="{% url 'acceptance_info' %}" >Acceptance Information</a></div>
             </div>
 
+            <div class="row pt-4 pb-2">
+                <div class="col-4"><a class="btn btn-info btn-lg btn-block menubtn" href="{% url 'item_info' %}" >Item Information</a></div>  
+                <div class="col-4"><a class="btn btn-info btn-lg btn-block menubtn" href="{% url 'customer_info' %}" >Customer Information</a></div>  
+                <div class="col-4"><a class="btn btn-info btn-lg btn-block menubtn" href="{% url 'supplier_info' %}" >Supplier Information</a></div>  
+            </div>
+
+            <div class="row pt-4">
+                <div class="col-4"><a class="btn btn-info btn-lg btn-block menubtn" href="{% url 'project_info' %}" >Project Information</a></div>  
+                <div class="col-4"></div>  
+                <div class="col-4"></div>  
+            </div>
+
             {% if user|in_group:"admin" %}
             <br>
-            <h2>Admin Only</h2>
+            <h2>Admin Menu</h2>
             <hr>
             <div class="row pt-2">
                 <div class="col-4"><a class="btn btn-primary btn-lg btn-block menubtn" href="{% url 'item_create' %}" >Item Registration</a></div>
@@ -30,25 +42,16 @@
                 <div class="col-4"><a class="btn btn-primary btn-lg btn-block menubtn" href="{% url 'supplier_create' %}" >Supplier Registration</a></div>  
             </div>
 
-            <div class="row pt-4 pb-2">
-                <div class="col-4"><a class="btn btn-primary btn-lg btn-block menubtn" href="{% url 'item_info' %}" >Item Information</a></div>  
-                <div class="col-4"><a class="btn btn-primary btn-lg btn-block menubtn" href="{% url 'customer_info' %}" >Customer Information</a></div>  
-                <div class="col-4"><a class="btn btn-primary btn-lg btn-block menubtn" href="{% url 'supplier_info' %}" >Supplier Information</a></div>  
-            </div>
             <br>
             <div class="row pt-4">
                 <div class="col-4"><a class="btn btn-primary btn-lg btn-block menubtn" href="{% url 'project_create' %}" >Project Registration</a></div>  
                 <div class="col-4"></div>  
                 <div class="col-4"></div>  
             </div>
-            <div class="row pt-4">
-                <div class="col-4"><a class="btn btn-primary btn-lg btn-block menubtn" href="{% url 'project_info' %}" >Project Information</a></div>  
-                <div class="col-4"></div>  
-                <div class="col-4"></div>  
-            </div>
+
             {% endif %}
         </div>
-        <div class="col-3">
+        <div class="col-md-3">
             <div class="ml-2 mt-3 mb-3"><h2>TO DO</h2></div>
             <hr>   
             <div class="col mb-3">
@@ -65,7 +68,7 @@
             </div>
         
        
-            <div class="col" id="taskList">
+            <div class="col-md-12" id="taskList">
                 {% for task in tasks  %}
                     <div class="card mb-1 mx-3" id="taskCard" data-id="{{ task.id }}" style="{% if task.completed %} text-decoration: line-through {% endif %}">
                         <div class="card-body">

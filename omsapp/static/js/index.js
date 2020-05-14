@@ -16,10 +16,16 @@ $(document).ready(function () {
             return false
         }
     };
+    function dateLengthCheck(date) {
+        if (date.val().length < 8) {
+            alert('Please input valid date')
+            date.val('');
+        }
+    }
+
     //--------------------------------------
 
     let mode = "1"; // 1:new 2:change 3:delete
-    console.log(mode);
 
     function modeBlock() {
         $('#chkbox1').prop('disabled', true)
@@ -98,7 +104,6 @@ $(document).ready(function () {
     
     $('input[name="chkbox"]').on('click', function () {
         mode = $(this).val();
-        console.log(mode);
     });
 
     // "Item Info Get / Order Create" ------
@@ -254,8 +259,6 @@ $(document).ready(function () {
                     $('#orderCreateTable').on('keypress', 'input[name="qty"]', function (event) {
                         if (event.keyCode === 13) {
                             let dataId = $(this).data('id');
-                            console.log($(`#item-${dataId + 1}`));
-                            // $(`#copyItem${dataId}`).val(`item-`)
                             if ($(`#item-${dataId + 1}`).length === 1) {
                                 $(`#item-${dataId + 1}`).focus();
                             } else {
@@ -287,7 +290,7 @@ $(document).ready(function () {
                     });
                 },
                 error: function () {
-                    alert("Please input valid Order Number.");
+                    alert("Please input valid Order Number, already exits.");
                 }
             });
         } else {
@@ -307,10 +310,8 @@ $(document).ready(function () {
                 type: 'post',
                 dataType: 'json',
                 success: function (response) {
-                    var customerCode = response.customer_info.customer_code
-                    var customerName = response.customer_info.name
-                    var personIncharge = response.person_incharge.username
-                    $('#customer').val(customerCode + '/' + customerName)
+                    var customerName = response.customer_info.customer[0]
+                    $('#customer').val(customerName)
                     $('input[name="suppDelDate"]').focus();
                     $('#prjCode').prop("disabled", true);
                 },
@@ -322,7 +323,7 @@ $(document).ready(function () {
     });
 
     // suppDelDate Validation -----------------------------
-    $('input[name="suppDelDate"]').on('input', function (event) {
+    $('input[name="suppDelDate"]').on('input', function () {
         let date1 = $('input[name="suppDelDate"]');
         let next1 = $('input[name="custDelDate"]');
         dateValidation(date1, next1);
@@ -330,7 +331,7 @@ $(document).ready(function () {
     
     });
     // custDelDate Validation -----------------------------
-    $('input[name="custDelDate"]').on('input', function (event) {
+    $('input[name="custDelDate"]').on('input', function () {
         let date2 = $('input[name="custDelDate"]');
         let next2 = $('#enter1');
         dateValidation(date2, next2);
@@ -348,14 +349,11 @@ $(document).ready(function () {
                 data: serializedData,
                 dataType: 'json',
                 success: function (response) {
-                    let orderNumber = $('#orderNumber').val();
-                    let prjCode = $('#prjCode').val();
+                    $('#prjCode').val(response.order_list.prj_code[0]);
+                    $('#customer').val(response.order_list.customer[0]);
 
-
-                    console.log(response.order_list)
                     let data = response.order_list
                     let dataLength = Object.keys(response.order_list.id).length;
-                    console.log(dataLength);
 
                     if (dataLength === 0) {
                         alert("This Order No does not exist.")
@@ -364,8 +362,6 @@ $(document).ready(function () {
                         modeBlock();
                         btnShowUp();
                         $('#orderNumber').prop("readonly", true);
-                        $('#orderNumCopy').val(orderNumber);
-                        $('#prjCodeCopy').val(prjCode);
                         $('#enter1').hide();
 
                         $("#orderCreateTable > thead").prepend(`
@@ -460,9 +456,11 @@ $(document).ready(function () {
                 data: serializedData,
                 dataType: 'json',
                 success: function (response) {
+                    $('#prjCode').val(response.order_list.prj_code[0]);
+                    $('#customer').val(response.order_list.customer[0]);
+
                     let data = response.order_list
                     let dataLength = Object.keys(response.order_list.id).length;
-
 
                     if (dataLength === 0) {
                         alert("This Order No does not exist.")
@@ -470,12 +468,9 @@ $(document).ready(function () {
                     } else {
                         modeBlock();
                         btnShowUp();
-                        let orderNumber = $('#orderNumber').val();
-                        let prjCode = $('#prjCode').val();
-                        $('#orderNumCopy').val(orderNumber);
-                        $('#prjCodeCopy').val(prjCode);
                         $('#orderNumber').prop("readonly", true);
                         $('#enter1').hide();
+
                         $("#orderCreateTable > thead").prepend(`
                         <tr class="text-center">
                             <th colspan="2">Item Code</th>
@@ -564,11 +559,6 @@ $(document).ready(function () {
         if (event.keyCode === 13) {
             if (mode === "1") {
                 $('#shipDate').focus();
-                $('#shipDate').on('input', function (event) {
-                    let shipDate = $('input[name="shipDate"]');
-                    let next3 = $('#enter2');
-                    dateValidation(shipDate, next3);
-                });
             } else if (mode === "2" || mode === "3") {
                 $('#orderId').focus();
                 $('#orderId').keypress(function (event) {
@@ -578,6 +568,11 @@ $(document).ready(function () {
                 });
             }
         }
+    });
+    $('#shipDate').on('input', function () {
+        let shipDate = $('input[name="shipDate"]');
+        let next3 = $('#enter2');
+        dateValidation(shipDate, next3);
     });
     
     // Shipment New ---------------------
@@ -931,11 +926,6 @@ $(document).ready(function () {
         if (event.keyCode === 13) {
             if (mode === "1") {
                 $('#acceptDate').focus();
-                $('#acceptDate').on('input', function (event) {
-                    let acceptDate = $('input[name="acceptDate"]');
-                    let next = $('#enter4');
-                    dateValidation(acceptDate, next);
-                });
             } else if (mode === "2" || mode === "3") {
                 $('#orderId').focus();
                 $('#orderId').keypress(function (event) {
@@ -945,6 +935,11 @@ $(document).ready(function () {
                 });
             }
         }
+    });
+    $('#acceptDate').on('input', function () {
+        let acceptDate = $('input[name="acceptDate"]');
+        let next = $('#enter4');
+        dateValidation(acceptDate, next);
     });
 
     // Acceptance New ---------------------
@@ -1305,17 +1300,28 @@ $(document).ready(function () {
 
     // Order Info ////////////////////////////////////////////////////////////////////////////////////
     // Sorting Order Information ------------
-    $('#dateS').on('input', function (event) {
+    $('#dateS').on('input', function () {
         let date = $('#dateS');
         let next = $('#dateE');
         dateValidation(date, next);
     });
+    $('#dateS').on('change', function () {
+        let date = $('#dateS');
+        dateLengthCheck(date);
+    });
+
+
     
-    $('#dateE').on('input', function (event) {
+    $('#dateE').on('input', function () {
         let date = $('#dateE');
         let next = $('#enter3');
         dateValidation(date, next);
     });
+    $('#dateE').on('change', function () {
+        let date = $('#dateE');
+        dateLengthCheck(date);
+    });
+
 
     // Item Create ////////////////////////////////////////////////////////////////////////////////////
     $('#itemCreateConfirm').click(function () {
@@ -1336,7 +1342,6 @@ $(document).ready(function () {
                 type: 'post',
                 dataType: 'json',
                 success: function (response) {
-                    console.log(response.new_item)
                     $("#message").show();
                     $("#createdItemTh").show();
                     $("#createdItemTable > tbody:last-child").append(`
